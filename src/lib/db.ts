@@ -42,6 +42,24 @@ if (!globalThis._mockDb) {
     tableCounter: 1,
     columnCounter: 1,
   };
+
+  const feedbackTableId = globalThis._mockDb.tableCounter++;
+  globalThis._mockDb.tables.push({
+    id: feedbackTableId,
+    table_name: 'feedback',
+    id_type: 'serial',
+    enable_pagination: true,
+    page_size: 10,
+    created_at: new Date().toISOString(),
+  });
+
+  globalThis._mockDb.columns.push(
+    { id: globalThis._mockDb.columnCounter++, table_id: feedbackTableId, column_name: 'title', column_type: 'text', is_nullable: false, created_at: new Date().toISOString() },
+    { id: globalThis._mockDb.columnCounter++, table_id: feedbackTableId, column_name: 'type', column_type: 'text', is_nullable: false, created_at: new Date().toISOString() },
+    { id: globalThis._mockDb.columnCounter++, table_id: feedbackTableId, column_name: 'description', column_type: 'text', is_nullable: false, created_at: new Date().toISOString() }
+  );
+
+  globalThis._mockDb.records['user_feedback'] = [];
 }
 
 const mockDb = globalThis._mockDb;
@@ -96,6 +114,30 @@ async function initDb() {
     const settingsCheck = await pool.query("SELECT COUNT(*) FROM system_settings WHERE key = 'cors_allow_all'");
     if (parseInt(settingsCheck.rows[0]?.count || 0, 10) === 0) {
       await pool.query("INSERT INTO system_settings (key, value) VALUES ('cors_allow_all', 'true'), ('cors_whitelist', '')");
+    }
+
+    const feedbackCheck = await pool.query("SELECT id FROM system_tables WHERE table_name = 'feedback'");
+    if (feedbackCheck.rows.length === 0) {
+      const tableRes = await pool.query(
+        "INSERT INTO system_tables (table_name, id_type, enable_pagination, page_size) VALUES ('feedback', 'serial', true, 10) RETURNING id"
+      );
+      const tableId = tableRes.rows[0].id;
+      await pool.query(
+        "INSERT INTO system_columns (table_id, column_name, column_type, is_nullable) VALUES " +
+        "($1, 'title', 'text', false), " +
+        "($1, 'type', 'text', false), " +
+        "($1, 'description', 'text', false)",
+        [tableId]
+      );
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS "user_feedback" (
+          id SERIAL PRIMARY KEY,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          "title" TEXT NOT NULL,
+          "type" TEXT NOT NULL,
+          "description" TEXT NOT NULL
+        )
+      `);
     }
 
     isInitialized = true;

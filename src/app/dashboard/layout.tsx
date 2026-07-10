@@ -29,6 +29,7 @@ import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import SendIcon from '@mui/icons-material/Send';
 import SettingsIcon from '@mui/icons-material/Settings';
+import RateReviewIcon from '@mui/icons-material/RateReview';
 import { useProjectStore } from '@/lib/store';
 
 const drawerWidth = 240;
@@ -84,7 +85,7 @@ const SidebarItem = ({
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { project, setProject, themeMode, toggleThemeMode } = useProjectStore();
+  const { themeMode, toggleThemeMode } = useProjectStore();
   const [isMinimized, setIsMinimized] = useState(false);
 
   const handleLogout = async () => {
@@ -99,6 +100,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { label: 'Create Table', href: '/dashboard/new', icon: <AddBoxIcon fontSize="small" /> },
     { label: 'Fetch', href: '/dashboard/fetch', icon: <SendIcon fontSize="small" /> },
     { label: 'Settings', href: '/dashboard/settings', icon: <SettingsIcon fontSize="small" /> },
+    { label: 'Feedback', href: '/dashboard/feedback', icon: <RateReviewIcon fontSize="small" /> },
     { label: 'User Guide', href: '/dashboard/guide', icon: <HelpIcon fontSize="small" /> },
   ];
 
@@ -122,24 +124,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <Typography variant="subtitle1" noWrap component="div" sx={{ fontWeight: 600 }}>
             Zibaas
           </Typography>
-          <Divider orientation="vertical" flexItem sx={{ bgcolor: themeMode === 'light' ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.1)', mx: 1 }} />
-          <FormControl size="small" variant="standard" sx={{ m: 1, minWidth: 160 }}>
-            <Select
-              value={project}
-              onChange={(e) => setProject(e.target.value)}
-              disableUnderline
-              sx={{
-                color: themeMode === 'light' ? '#ffffff' : '#f5f5f4',
-                fontSize: '0.875rem',
-                fontWeight: 500,
-                '& .MuiSelect-icon': { color: themeMode === 'light' ? '#ffffff' : '#f5f5f4' },
-              }}
-            >
-              <MenuItem value="zibaas-default-project">zibaas-default-project</MenuItem>
-              <MenuItem value="zibaas-development">zibaas-development</MenuItem>
-              <MenuItem value="zibaas-production">zibaas-production</MenuItem>
-            </Select>
-          </FormControl>
           <Box sx={{ flexGrow: 1 }} />
           <Tooltip title="Toggle theme">
             <IconButton color="inherit" onClick={toggleThemeMode} size="small">
@@ -192,6 +176,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {!isMinimized && (
             <Box sx={{ mt: 'auto', p: 2 }}>
               <Divider sx={{ mb: 2 }} />
+              <Box
+                sx={{
+                  mb: 1,
+                  py: 1,
+                  px: 1.5,
+                  bgcolor: themeMode === 'light' ? '#f1f3f4' : '#2e2a28',
+                  borderRadius: 1,
+                  border: themeMode === 'light' ? '1px solid #dadce0' : '1px solid #3e3a38',
+                }}
+              >
+                <Typography variant="caption" sx={{ display: 'block', fontWeight: 'bold', color: themeMode === 'light' ? '#5f6368' : '#a8a29e', mb: 0.5 }}>
+                  Version 1.0
+                </Typography>
+              </Box>
               <Box
                 sx={{
                   p: 1.5,
