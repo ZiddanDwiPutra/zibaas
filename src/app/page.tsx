@@ -1,65 +1,182 @@
-import Image from "next/image";
+'use client';
+
+import React from 'react';
+import Link from 'next/link';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import Grid from '@mui/material/Grid';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import Paper from '@mui/material/Paper';
+import Divider from '@mui/material/Divider';
+import CloudQueueIcon from '@mui/icons-material/CloudQueue';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import ZapIcon from '@mui/icons-material/FlashOn';
+import CodeIcon from '@mui/icons-material/Code';
+import SecurityIcon from '@mui/icons-material/Security';
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: '#f8f9fa' }}>
+      <Paper
+        elevation={0}
+        sx={{
+          borderBottom: '1px solid #dadce0',
+          bgcolor: '#ffffff',
+          py: 1.5,
+          px: 4,
+          position: 'sticky',
+          top: 0,
+          zIndex: 10,
+        }}
+      >
+        <Box sx={{ maxWidth: 1200, mx: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <CloudQueueIcon sx={{ color: '#1a73e8' }} />
+            <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#202124' }}>
+              Zibaas Console
+            </Typography>
+          </Box>
+          <Link href="/dashboard" style={{ textDecoration: 'none' }}>
+            <Button variant="outlined" size="small" sx={{ color: '#1a73e8', borderColor: '#dadce0' }}>
+              Go to Console
+            </Button>
+          </Link>
+        </Box>
+      </Paper>
+
+      <Box
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          py: 8,
+          px: 3,
+          textAlign: 'center',
+        }}
+      >
+        <Box sx={{ maxWidth: 800, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+          <Typography
+            variant="h3"
+            component="h1"
+            sx={{ fontWeight: 'bold', color: '#202124', tracking: -1, lineHeight: 1.2 }}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+            Deploy Relational Database REST APIs in Seconds
+          </Typography>
+
+          <Typography variant="body1" sx={{ color: '#5f6368', maxW: 600, fontSize: '1.1rem' }}>
+            A developer platform to build instant backend routes, schemas, and spreadsheet browsers powered by Next.js and Neon Postgres.
+          </Typography>
+
+          <Link href="/dashboard" style={{ textDecoration: 'none', marginTop: 16 }}>
+            <Button variant="contained" endIcon={<ArrowForwardIcon />} size="large" sx={{ bgcolor: '#1a73e8', py: 1.5, px: 4 }}>
+              Enter Console Dashboard
+            </Button>
+          </Link>
+        </Box>
+
+        <Box sx={{ maxWidth: 1000, w: '100%', mt: 8 }}>
+          <Divider sx={{ mb: 6 }} />
+          <Grid container spacing={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <Card variant="outlined" sx={{ textAlign: 'left', height: '100%' }}>
+                <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                  <Box
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      bgcolor: '#e8f0fe',
+                      borderRadius: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#1a73e8',
+                    }}
+                  >
+                    <ZapIcon />
+                  </Box>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: '#202124' }}>
+                    Instant Deployment
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: '#5f6368', lineHeight: 1.5 }}>
+                    Compile physical Postgres tables and hook up REST paths instantly without migrations.
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <Card variant="outlined" sx={{ textAlign: 'left', height: '100%' }}>
+                <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                  <Box
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      bgcolor: '#e8f0fe',
+                      borderRadius: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#1a73e8',
+                    }}
+                  >
+                    <CodeIcon />
+                  </Box>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: '#202124' }}>
+                    Unified Catch-All Rest
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: '#5f6368', lineHeight: 1.5 }}>
+                    Expose standardized CRUD routes with strict column structures and data validations.
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <Card variant="outlined" sx={{ textAlign: 'left', height: '100%' }}>
+                <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                  <Box
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      bgcolor: '#e8f0fe',
+                      borderRadius: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#1a73e8',
+                    }}
+                  >
+                    <SecurityIcon />
+                  </Box>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: '#202124' }}>
+                    Sandboxed Identifiers
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: '#5f6368', lineHeight: 1.5 }}>
+                    Secure custom SQL identifier sanitization prevents any SQL Injection vulnerabilities.
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+        </Box>
+      </Box>
+
+      <Box
+        sx={{
+          py: 3,
+          textAlign: 'center',
+          borderTop: '1px solid #dadce0',
+          bgcolor: '#ffffff',
+          color: '#5f6368',
+          fontSize: '0.75rem',
+        }}
+      >
+        © 2026 Zibaas Console. Powered by Next.js & Neon Serverless Cloud.
+      </Box>
+    </Box>
   );
 }
