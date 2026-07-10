@@ -12,6 +12,8 @@ import MenuItem from '@mui/material/MenuItem';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Paper from '@mui/material/Paper';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
 import IconButton from '@mui/material/IconButton';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import AddIcon from '@mui/icons-material/Add';
@@ -34,6 +36,9 @@ export default function NewTablePage() {
   const [isDeploying, setIsDeploying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [existingTables, setExistingTables] = useState<any[]>([]);
+  const [idType, setIdType] = useState<'serial' | 'uuid'>('serial');
+  const [enablePagination, setEnablePagination] = useState(false);
+  const [pageSize, setPageSize] = useState(10);
 
   React.useEffect(() => {
     fetch('/api/admin/tables')
@@ -79,6 +84,9 @@ export default function NewTablePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: tableName.trim(),
+          idType,
+          enablePagination,
+          pageSize,
           columns: columns.map(c => ({
             name: c.name.trim(),
             type: c.type,
@@ -105,15 +113,15 @@ export default function NewTablePage() {
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, maxWidth: 800, mx: 'auto' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <Link href="/dashboard" style={{ textDecoration: 'none' }}>
-          <IconButton sx={{ border: '1px solid #dadce0', borderRadius: 2 }}>
+          <IconButton sx={{ borderColor: 'divider', borderRadius: 2 }}>
             <ArrowBackIcon fontSize="small" />
           </IconButton>
         </Link>
         <Box>
-          <Typography variant="h5" sx={{ fontWeight: 600, color: '#202124' }}>
+          <Typography variant="h5" sx={{ fontWeight: 600, color: 'text.primary' }}>
             Create Table Schema
           </Typography>
-          <Typography variant="body2" sx={{ color: '#5f6368', mt: 0.5 }}>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
             Define custom columns and deploy instant serverless backend hooks.
           </Typography>
         </Box>
@@ -123,12 +131,12 @@ export default function NewTablePage() {
         variant="outlined"
         sx={{
           p: 2,
-          bgcolor: '#e8f0fe',
-          borderColor: '#1a73e8',
+          bgcolor: (theme) => theme.palette.mode === 'light' ? '#e8f0fe' : '#2e2a28',
+          borderColor: 'primary.main',
           borderRadius: 2,
         }}
       >
-        <Typography variant="body2" sx={{ color: '#1a73e8', fontSize: '0.85rem' }}>
+        <Typography variant="body2" sx={{ color: (theme) => theme.palette.mode === 'light' ? '#1a73e8' : '#bcaaa4', fontSize: '0.85rem' }}>
           <strong>Notice:</strong> System columns <code>id</code> (Auto-Incrementing Primary Key) and <code>created_at</code> (Timestamp) are added automatically to every table.
         </Typography>
       </Paper>
@@ -151,24 +159,62 @@ export default function NewTablePage() {
       <form onSubmit={handleSubmit}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           <Paper variant="outlined" sx={{ p: 3, borderRadius: 2 }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#202124', mb: 2 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 600, color: 'text.primary', mb: 2 }}>
               Table Information
             </Typography>
-            <TextField
-              fullWidth
-              label="Table Name"
-              placeholder="e.g. products, customers, logs"
-              variant="outlined"
-              size="small"
-              value={tableName}
-              onChange={e => setTableName(e.target.value.replace(/[^a-zA-Z0-9_]/g, ''))}
-              required
-            />
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+              <TextField
+                fullWidth
+                label="Table Name"
+                placeholder="e.g. products, customers, logs"
+                variant="outlined"
+                size="small"
+                value={tableName}
+                onChange={e => setTableName(e.target.value.replace(/[^a-zA-Z0-9_]/g, ''))}
+                required
+              />
+
+              <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap', alignItems: 'center' }}>
+                <FormControl size="small" sx={{ minWidth: 220 }}>
+                  <InputLabel id="id-type-label">ID Type</InputLabel>
+                  <Select
+                    labelId="id-type-label"
+                    label="ID Type"
+                    value={idType}
+                    onChange={e => setIdType(e.target.value as 'serial' | 'uuid')}
+                  >
+                    <MenuItem value="serial">Auto-Increment (SERIAL)</MenuItem>
+                    <MenuItem value="uuid">UUID (v4)</MenuItem>
+                  </Select>
+                </FormControl>
+
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={enablePagination}
+                      onChange={e => setEnablePagination(e.target.checked)}
+                    />
+                  }
+                  label={<Typography variant="body2">Enable API Pagination</Typography>}
+                />
+
+                {enablePagination && (
+                  <TextField
+                    type="number"
+                    label="Page Size"
+                    size="small"
+                    value={pageSize}
+                    onChange={e => setPageSize(Math.max(1, parseInt(e.target.value, 10) || 10))}
+                    sx={{ width: 120 }}
+                  />
+                )}
+              </Box>
+            </Box>
           </Paper>
 
           <Paper variant="outlined" sx={{ p: 3, borderRadius: 2 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#202124' }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, color: 'text.primary' }}>
                 Column Definitions
               </Typography>
               <Button variant="outlined" size="small" startIcon={<AddIcon />} onClick={addColumn}>
@@ -185,8 +231,9 @@ export default function NewTablePage() {
                     alignItems: 'center',
                     gap: 2,
                     p: 2,
-                    bgcolor: '#f8f9fa',
-                    border: '1px solid #dadce0',
+                    bgcolor: 'background.default',
+                    border: '1px solid',
+                    borderColor: 'divider',
                     borderRadius: 1.5,
                     flexWrap: 'wrap',
                   }}
@@ -276,7 +323,7 @@ export default function NewTablePage() {
               variant="contained"
               startIcon={<RocketLaunchIcon />}
               disabled={isDeploying}
-              sx={{ bgcolor: '#1a73e8' }}
+              sx={{ bgcolor: 'primary.main', color: '#ffffff' }}
             >
               {isDeploying ? 'Deploying...' : 'Deploy API'}
             </Button>

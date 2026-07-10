@@ -31,7 +31,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, columns } = body;
+    const { name, columns, idType, enablePagination, pageSize } = body;
 
     if (!name || typeof name !== 'string') {
       return NextResponse.json({ error: 'Invalid table name' }, { status: 400 });
@@ -64,7 +64,11 @@ export async function POST(request: NextRequest) {
       };
     });
 
-    await createTable(safeName, sanitizedColumns);
+    await createTable(sanitizedColumns.length > 0 ? safeName : '', sanitizedColumns, {
+      idType: idType === 'uuid' ? 'uuid' : 'serial',
+      enablePagination: !!enablePagination,
+      pageSize: typeof pageSize === 'number' ? pageSize : 10,
+    });
 
     return NextResponse.json({ success: true }, { status: 201 });
   } catch (error: any) {

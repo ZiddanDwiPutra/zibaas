@@ -97,15 +97,15 @@ export default function DashboardPage() {
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
         <Box>
-          <Typography variant="h5" sx={{ fontWeight: 600, color: '#202124' }}>
+          <Typography variant="h5" sx={{ fontWeight: 600, color: 'text.primary' }}>
             No-Code Engine API Gateway
           </Typography>
-          <Typography variant="body2" sx={{ color: '#5f6368', mt: 0.5 }}>
-            Model and expose instant relational REST endpoints on Google Cloud style.
+          <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
+            Model and expose instant relational REST endpoints.
           </Typography>
         </Box>
         <Link href="/dashboard/new" style={{ textDecoration: 'none' }}>
-          <Button variant="contained" startIcon={<AddIcon />} sx={{ bgcolor: '#1a73e8' }}>
+          <Button variant="contained" startIcon={<AddIcon />} sx={{ bgcolor: 'primary.main', color: '#ffffff' }}>
             New Table
           </Button>
         </Link>
@@ -115,10 +115,10 @@ export default function DashboardPage() {
         <Grid size={{ xs: 12, sm: 4 }}>
           <Card variant="outlined">
             <CardContent>
-              <Typography variant="caption" sx={{ fontWeight: 'bold', color: '#5f6368', textTransform: 'uppercase' }}>
+              <Typography variant="caption" sx={{ fontWeight: 'bold', color: 'text.secondary', textTransform: 'uppercase' }}>
                 ACTIVE TABLES
               </Typography>
-              <Typography variant="h3" sx={{ fontWeight: 'bold', color: '#202124', mt: 1 }}>
+              <Typography variant="h3" sx={{ fontWeight: 'bold', color: 'text.primary', mt: 1 }}>
                 {tables.length}
               </Typography>
             </CardContent>
@@ -128,10 +128,10 @@ export default function DashboardPage() {
         <Grid size={{ xs: 12, sm: 4 }}>
           <Card variant="outlined">
             <CardContent>
-              <Typography variant="caption" sx={{ fontWeight: 'bold', color: '#5f6368', textTransform: 'uppercase' }}>
+              <Typography variant="caption" sx={{ fontWeight: 'bold', color: 'text.secondary', textTransform: 'uppercase' }}>
                 SCHEMA COLUMNS
               </Typography>
-              <Typography variant="h3" sx={{ fontWeight: 'bold', color: '#202124', mt: 1 }}>
+              <Typography variant="h3" sx={{ fontWeight: 'bold', color: 'text.primary', mt: 1 }}>
                 {tables.reduce((acc, t) => acc + (t.columns?.length || 0), 0)}
               </Typography>
             </CardContent>
@@ -141,10 +141,10 @@ export default function DashboardPage() {
         <Grid size={{ xs: 12, sm: 4 }}>
           <Card variant="outlined">
             <CardContent>
-              <Typography variant="caption" sx={{ fontWeight: 'bold', color: '#5f6368', textTransform: 'uppercase' }}>
+              <Typography variant="caption" sx={{ fontWeight: 'bold', color: 'text.secondary', textTransform: 'uppercase' }}>
                 AGGREGATE RECORDS
               </Typography>
-              <Typography variant="h3" sx={{ fontWeight: 'bold', color: '#202124', mt: 1 }}>
+              <Typography variant="h3" sx={{ fontWeight: 'bold', color: 'text.primary', mt: 1 }}>
                 {tables.reduce((acc, t) => acc + (t.rowCount || 0), 0)}
               </Typography>
             </CardContent>
@@ -153,8 +153,8 @@ export default function DashboardPage() {
       </Grid>
 
       <TableContainer component={Paper} variant="outlined" sx={{ boxShadow: 'none', borderRadius: 2 }}>
-        <Box sx={{ p: 2.5, borderBottom: '1px solid #dadce0', bgcolor: '#ffffff' }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#202124' }}>
+        <Box sx={{ p: 2.5, borderBottom: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: 'text.primary' }}>
             System Tables
           </Typography>
         </Box>
@@ -169,7 +169,7 @@ export default function DashboardPage() {
           </Box>
         ) : tables.length === 0 ? (
           <Box sx={{ p: 8, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-            <Typography variant="body2" sx={{ color: '#5f6368' }}>
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               No database schemas are defined yet. Create your first table to get started.
             </Typography>
             <Link href="/dashboard/new" style={{ textDecoration: 'none' }}>
@@ -180,13 +180,13 @@ export default function DashboardPage() {
           </Box>
         ) : (
           <Table sx={{ minWidth: 650 }}>
-            <TableHead sx={{ bgcolor: '#f8f9fa' }}>
+            <TableHead sx={{ bgcolor: 'background.default' }}>
               <TableRow>
-                <TableCell sx={{ fontWeight: 'bold', color: '#5f6368', py: 1.5 }}>Table Name</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: '#5f6368', py: 1.5 }}>Columns</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: '#5f6368', py: 1.5 }}>Records</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', color: '#5f6368', py: 1.5 }}>API Path</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 'bold', color: '#5f6368', py: 1.5 }}>Actions</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary', py: 1.5 }}>Table Name</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary', py: 1.5 }}>Columns</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary', py: 1.5 }}>Records</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary', py: 1.5 }}>API Path</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 'bold', color: 'text.secondary', py: 1.5 }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -195,9 +195,11 @@ export default function DashboardPage() {
                   <TableCell>
                     <Link
                       href={`/dashboard/tables/${table.table_name}`}
-                      style={{ textDecoration: 'none', color: '#1a73e8', fontWeight: 600 }}
+                      style={{ textDecoration: 'none', fontWeight: 600 }}
                     >
-                      {table.table_name}
+                      <Box component="span" sx={{ color: 'primary.main' }}>
+                        {table.table_name}
+                      </Box>
                     </Link>
                   </TableCell>
                   <TableCell>
@@ -213,7 +215,7 @@ export default function DashboardPage() {
                       ))}
                     </Box>
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 500, color: '#3c4043' }}>{table.rowCount}</TableCell>
+                  <TableCell sx={{ fontWeight: 500, color: 'text.primary' }}>{table.rowCount}</TableCell>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Box
@@ -221,10 +223,11 @@ export default function DashboardPage() {
                           fontFamily: 'monospace',
                           fontSize: '0.75rem',
                           p: '4px 8px',
-                          bgcolor: '#f1f3f4',
-                          border: '1px solid #dadce0',
+                          bgcolor: (theme) => theme.palette.mode === 'light' ? '#f1f3f4' : '#2e2a28',
+                          border: '1px solid',
+                          borderColor: 'divider',
                           borderRadius: 1,
-                          color: '#b06000',
+                          color: (theme) => theme.palette.mode === 'light' ? '#b06000' : '#d7ccc8',
                         }}
                       >
                         /api/v1/{table.table_name}

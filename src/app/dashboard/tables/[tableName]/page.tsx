@@ -191,10 +191,10 @@ export default function TableBrowserPage({
             </IconButton>
           </Link>
           <Box>
-            <Typography variant="h5" sx={{ fontWeight: 600, color: '#202124' }}>
+            <Typography variant="h5" sx={{ fontWeight: 600, color: 'text.primary' }}>
               {meta.table_name} Data Browser
             </Typography>
-            <Typography variant="body2" sx={{ color: '#5f6368', mt: 0.5 }}>
+            <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
               Browse and edit records dynamically inside the relational database table.
             </Typography>
           </Box>
@@ -204,7 +204,7 @@ export default function TableBrowserPage({
           variant="contained"
           startIcon={isAdding ? <CloseIcon /> : <AddIcon />}
           onClick={() => setIsAdding(!isAdding)}
-          sx={{ bgcolor: isAdding ? '#5f6368' : '#1a73e8' }}
+          sx={{ bgcolor: isAdding ? 'text.secondary' : 'primary.main', color: '#ffffff' }}
         >
           {isAdding ? 'Cancel' : 'Insert Row'}
         </Button>
@@ -212,7 +212,7 @@ export default function TableBrowserPage({
 
       {isAdding && (
         <Paper variant="outlined" sx={{ p: 3, borderRadius: 2 }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#202124', mb: 3 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: 'text.primary', mb: 3 }}>
             New Record Data
           </Typography>
           <form onSubmit={handleAddRow}>
@@ -221,7 +221,7 @@ export default function TableBrowserPage({
                 <Grid size={{ xs: 12, sm: 6 }} key={col.column_name}>
                   {col.column_type === 'boolean' ? (
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                      <Typography variant="caption" sx={{ fontWeight: 'bold', color: '#5f6368' }}>
+                      <Typography variant="caption" sx={{ fontWeight: 'bold', color: 'text.secondary' }}>
                         {col.column_name} (boolean)
                       </Typography>
                       <Select
@@ -256,7 +256,7 @@ export default function TableBrowserPage({
               <Button size="small" variant="outlined" color="inherit" onClick={() => setIsAdding(false)}>
                 Cancel
               </Button>
-              <Button size="small" variant="contained" type="submit" sx={{ bgcolor: '#1a73e8' }}>
+              <Button size="small" variant="contained" type="submit" sx={{ bgcolor: 'primary.main', color: '#ffffff' }}>
                 Save Row
               </Button>
             </Box>
@@ -266,22 +266,22 @@ export default function TableBrowserPage({
 
       <TableContainer component={Paper} variant="outlined" sx={{ boxShadow: 'none', borderRadius: 2 }}>
         <Table sx={{ minWidth: 650 }}>
-          <TableHead sx={{ bgcolor: '#f8f9fa' }}>
+          <TableHead sx={{ bgcolor: 'background.default' }}>
             <TableRow>
-              <TableCell sx={{ fontWeight: 'bold', color: '#5f6368', py: 1.5, w: 60 }}>ID</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary', py: 1.5, w: 60 }}>ID</TableCell>
               {meta.columns.map(col => (
-                <TableCell key={col.column_name} sx={{ fontWeight: 'bold', color: '#5f6368', py: 1.5 }}>
+                <TableCell key={col.column_name} sx={{ fontWeight: 'bold', color: 'text.secondary', py: 1.5 }}>
                   {col.column_name}
                 </TableCell>
               ))}
-              <TableCell sx={{ fontWeight: 'bold', color: '#5f6368', py: 1.5 }}>Created At</TableCell>
-              <TableCell align="right" sx={{ fontWeight: 'bold', color: '#5f6368', py: 1.5 }}>Actions</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary', py: 1.5 }}>Created At</TableCell>
+              <TableCell align="right" sx={{ fontWeight: 'bold', color: 'text.secondary', py: 1.5 }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={meta.columns.length + 3} align="center" sx={{ py: 6, color: '#5f6368' }}>
+                <TableCell colSpan={meta.columns.length + 3} align="center" sx={{ py: 6, color: 'text.secondary' }}>
                   No records found in this table. Use the "Insert Row" button above or trigger a POST request.
                 </TableCell>
               </TableRow>
@@ -290,7 +290,7 @@ export default function TableBrowserPage({
                 const isEditing = editingId === row.id;
                 return (
                   <TableRow key={row.id} hover>
-                    <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.75rem', color: '#5f6368' }}>
+                    <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.75rem', color: 'text.secondary' }}>
                       {row.id}
                     </TableCell>
                     {meta.columns.map(col => {
@@ -329,12 +329,12 @@ export default function TableBrowserPage({
                               sx={{ fontSize: '0.75rem', height: 20 }}
                             />
                           ) : (
-                            row[name] ?? <span style={{ fontStyle: 'italic', color: '#80868b' }}>null</span>
+                            row[name] ?? <span style={{ fontStyle: 'italic', color: 'text.secondary' }}>null</span>
                           )}
                         </TableCell>
                       );
                     })}
-                    <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.75rem', color: '#5f6368' }}>
+                    <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.75rem', color: 'text.secondary' }}>
                       {new Date(row.created_at).toLocaleString()}
                     </TableCell>
                     <TableCell align="right">
@@ -375,14 +375,14 @@ export default function TableBrowserPage({
       </TableContainer>
 
       <Paper variant="outlined" sx={{ p: 3, borderRadius: 2 }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#202124', mb: 2 }}>
+        <Typography variant="subtitle2" sx={{ fontWeight: 600, color: 'text.primary', mb: 2 }}>
           API Integration Details
         </Typography>
 
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           <Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-              <Typography variant="caption" sx={{ fontWeight: 'bold', color: '#5f6368' }}>
+              <Typography variant="caption" sx={{ fontWeight: 'bold', color: 'text.secondary' }}>
                 FETCH DATA (GET)
               </Typography>
               <Button
@@ -397,8 +397,9 @@ export default function TableBrowserPage({
             <Box
               sx={{
                 p: 2,
-                bgcolor: '#202124',
-                color: '#a8c7fa',
+                bgcolor: (theme) => theme.palette.mode === 'light' ? '#202124' : '#121212',
+                color: (theme) => theme.palette.mode === 'light' ? '#a8c7fa' : '#bcaaa4',
+                border: (theme) => theme.palette.mode === 'light' ? 'none' : '1px solid #2e2a28',
                 borderRadius: 1,
                 fontFamily: 'monospace',
                 fontSize: '0.8rem',
@@ -426,8 +427,9 @@ export default function TableBrowserPage({
             <Box
               sx={{
                 p: 2,
-                bgcolor: '#202124',
-                color: '#a8c7fa',
+                bgcolor: (theme) => theme.palette.mode === 'light' ? '#202124' : '#121212',
+                color: (theme) => theme.palette.mode === 'light' ? '#a8c7fa' : '#bcaaa4',
+                border: (theme) => theme.palette.mode === 'light' ? 'none' : '1px solid #2e2a28',
                 borderRadius: 1,
                 fontFamily: 'monospace',
                 fontSize: '0.8rem',
@@ -455,8 +457,9 @@ export default function TableBrowserPage({
             <Box
               sx={{
                 p: 2,
-                bgcolor: '#202124',
-                color: '#a8c7fa',
+                bgcolor: (theme) => theme.palette.mode === 'light' ? '#202124' : '#121212',
+                color: (theme) => theme.palette.mode === 'light' ? '#a8c7fa' : '#bcaaa4',
+                border: (theme) => theme.palette.mode === 'light' ? 'none' : '1px solid #2e2a28',
                 borderRadius: 1,
                 fontFamily: 'monospace',
                 fontSize: '0.8rem',
@@ -485,8 +488,9 @@ export default function TableBrowserPage({
             <Box
               sx={{
                 p: 2,
-                bgcolor: '#202124',
-                color: '#a8c7fa',
+                bgcolor: (theme) => theme.palette.mode === 'light' ? '#202124' : '#121212',
+                color: (theme) => theme.palette.mode === 'light' ? '#a8c7fa' : '#bcaaa4',
+                border: (theme) => theme.palette.mode === 'light' ? 'none' : '1px solid #2e2a28',
                 borderRadius: 1,
                 fontFamily: 'monospace',
                 fontSize: '0.8rem',
@@ -515,8 +519,9 @@ export default function TableBrowserPage({
             <Box
               sx={{
                 p: 2,
-                bgcolor: '#202124',
-                color: '#a8c7fa',
+                bgcolor: (theme) => theme.palette.mode === 'light' ? '#202124' : '#121212',
+                color: (theme) => theme.palette.mode === 'light' ? '#a8c7fa' : '#bcaaa4',
+                border: (theme) => theme.palette.mode === 'light' ? 'none' : '1px solid #2e2a28',
                 borderRadius: 1,
                 fontFamily: 'monospace',
                 fontSize: '0.8rem',

@@ -1,14 +1,22 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import createCache from '@emotion/cache';
 import { useServerInsertedHTML } from 'next/navigation';
 import { CacheProvider } from '@emotion/react';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import theme from '@/lib/theme';
+import { getTheme } from '@/lib/theme';
+import { useProjectStore } from '@/lib/store';
 
 export default function ThemeRegistry({ children }: { children: React.ReactNode }) {
+  const { themeMode } = useProjectStore();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const [{ cache, flush }] = useState(() => {
     const cache = createCache({ key: 'mui' });
     cache.compat = true;
@@ -49,9 +57,11 @@ export default function ThemeRegistry({ children }: { children: React.ReactNode 
     );
   });
 
+  const activeTheme = mounted ? getTheme(themeMode) : getTheme('light');
+
   return (
     <CacheProvider value={cache}>
-      <ThemeProvider theme={theme}>
+      <ThemeProvider theme={activeTheme}>
         <CssBaseline />
         {children}
       </ThemeProvider>
