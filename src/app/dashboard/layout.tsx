@@ -187,7 +187,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 }}
               >
                 <Typography variant="caption" sx={{ display: 'block', fontWeight: 'bold', color: themeMode === 'light' ? '#5f6368' : '#a8a29e', mb: 0.5 }}>
-                  Version 1.0
+                  Version {process.env.version}
                 </Typography>
               </Box>
               <Box
