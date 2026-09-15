@@ -108,7 +108,7 @@ export async function GET(
       const textColumns = meta.columns.filter((c: any) => c.column_type === 'text').map((c: any) => c.column_name);
 
       let whereClause = '';
-      let queryParams: any[] = [];
+      const queryParams: any[] = [];
 
       if (searchVal && textColumns.length > 0) {
         const conditions = textColumns.map((col: string) => `"${col}" ILIKE $1`).join(' OR ');

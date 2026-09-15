@@ -4,7 +4,7 @@ import type { NextRequest } from 'next/server';
 export function proxy(request: NextRequest) {
   const session = request.cookies.get('zibaas_session');
 
-  if (request.nextUrl.pathname.startsWith('/dashboard')) {
+  if (request.nextUrl.pathname.startsWith('/dashboard') || request.nextUrl.pathname.startsWith('/wsstore')) {
     if (!session || session.value !== 'true') {
       const loginUrl = new URL('/login', request.url);
       return NextResponse.redirect(loginUrl);
@@ -15,5 +15,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*'],
+  matcher: ['/dashboard/:path*', '/wsstore/:path*'],
 };
