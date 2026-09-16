@@ -14,7 +14,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Chip from '@mui/material/Chip';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 
-export default function FetchPage() {
+const FetchPage = () => {
   const [url, setUrl] = useState('');
   const [method, setMethod] = useState('GET');
   const [requestBody, setRequestBody] = useState('');
@@ -52,17 +52,14 @@ export default function FetchPage() {
           if (requestBody.trim()) {
             options.body = JSON.stringify(JSON.parse(requestBody));
           }
-        } catch (jsonErr) {
+        } catch {
           throw new Error('Invalid JSON format in Request Body');
         }
       }
 
-      const startTime = performance.now();
       const res = await fetch(url, options);
-      const endTime = performance.now();
-      
       setResponseStatus(res.status);
-      
+
       const headersObj: Record<string, string> = {};
       res.headers.forEach((val, key) => {
         headersObj[key] = val;
@@ -92,9 +89,9 @@ export default function FetchPage() {
   };
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, maxWidth: 1000, mx: 'auto' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, maxWidth: 1000, mx: 'auto', width: '100%' }}>
       <Box>
-        <Typography variant="h5" sx={{ fontWeight: 600, color: 'text.primary' }}>
+        <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary', fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
           API Tester Client
         </Typography>
         <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
@@ -102,13 +99,21 @@ export default function FetchPage() {
         </Typography>
       </Box>
 
-      <Paper variant="outlined" sx={{ p: 3, borderRadius: 2, bgcolor: 'background.paper' }}>
+      <Paper variant="outlined" sx={{ p: { xs: 2.5, sm: 3 }, borderRadius: 2, bgcolor: 'background.paper' }}>
         <form onSubmit={handleSend}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-              <FormControl sx={{ minWidth: 120 }} size="small">
-                <InputLabel>Method</InputLabel>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
+                gap: 2,
+                alignItems: { xs: 'stretch', sm: 'center' },
+              }}
+            >
+              <FormControl sx={{ width: { xs: '100%', sm: 130 } }} size="small">
+                <InputLabel id="method-select-label">Method</InputLabel>
                 <Select
+                  labelId="method-select-label"
                   value={method}
                   label="Method"
                   onChange={(e) => setMethod(e.target.value)}
@@ -127,7 +132,7 @@ export default function FetchPage() {
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 required
-                sx={{ flex: 1, minWidth: 250 }}
+                sx={{ flex: 1 }}
               />
 
               <Button
@@ -135,7 +140,13 @@ export default function FetchPage() {
                 type="submit"
                 startIcon={isLoading ? <CircularProgress size={16} color="inherit" /> : <PlayArrowIcon />}
                 disabled={isLoading}
-                sx={{ px: 3, bgcolor: 'primary.main', color: '#ffffff' }}
+                sx={{
+                  px: 3,
+                  py: { xs: 1, sm: 0.75 },
+                  bgcolor: 'primary.main',
+                  color: '#ffffff',
+                  width: { xs: '100%', sm: 'auto' },
+                }}
               >
                 Send
               </Button>
@@ -166,8 +177,8 @@ export default function FetchPage() {
       </Paper>
 
       {(responseStatus !== null || error || isLoading) && (
-        <Paper variant="outlined" sx={{ p: 3, borderRadius: 2, bgcolor: 'background.paper' }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, borderBottom: '1px solid', borderColor: 'divider', pb: 1.5 }}>
+        <Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 }, borderRadius: 2, bgcolor: 'background.paper' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, borderBottom: '1px solid', borderColor: 'divider', pb: 1.5, flexWrap: 'wrap', gap: 1 }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 600, color: 'text.primary' }}>
               Response
             </Typography>
@@ -188,8 +199,8 @@ export default function FetchPage() {
           )}
 
           {error && (
-            <Box sx={{ p: 2, bgcolor: (theme) => theme.palette.mode === 'light' ? '#fce8e6' : '#2d1f1e', color: '#c5221f', borderRadius: 1 }}>
-              <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+            <Box sx={{ p: 2, bgcolor: (t) => t.palette.mode === 'light' ? '#fce8e6' : '#2d1f1e', color: '#c5221f', borderRadius: 1.5 }}>
+              <Typography variant="body2" sx={{ fontFamily: 'monospace', wordBreak: 'break-word' }}>
                 Error: {error}
               </Typography>
             </Box>
@@ -204,14 +215,15 @@ export default function FetchPage() {
                 <Box
                   sx={{
                     p: 2,
-                    bgcolor: (theme) => theme.palette.mode === 'light' ? '#202124' : '#121212',
-                    color: (theme) => theme.palette.mode === 'light' ? '#a8c7fa' : '#bcaaa4',
-                    border: (theme) => theme.palette.mode === 'light' ? 'none' : '1px solid #2e2a28',
-                    borderRadius: 1,
+                    bgcolor: (t) => t.palette.mode === 'light' ? '#202124' : '#121212',
+                    color: (t) => t.palette.mode === 'light' ? '#a8c7fa' : '#bcaaa4',
+                    border: (t) => t.palette.mode === 'light' ? 'none' : '1px solid #2e2a28',
+                    borderRadius: 1.5,
                     fontFamily: 'monospace',
                     fontSize: '0.8rem',
                     overflowX: 'auto',
                     whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word',
                     maxHeight: '400px'
                   }}
                 >
@@ -232,11 +244,12 @@ export default function FetchPage() {
                       bgcolor: 'background.default',
                       border: '1px solid',
                       borderColor: 'divider',
-                      borderRadius: 1,
+                      borderRadius: 1.5,
                       fontFamily: 'monospace',
                       fontSize: '0.75rem',
                       overflowX: 'auto',
-                      maxHeight: '200px'
+                      maxHeight: '200px',
+                      wordBreak: 'break-all'
                     }}
                   >
                     {Object.entries(responseHeaders).map(([key, val]) => (
@@ -253,4 +266,6 @@ export default function FetchPage() {
       )}
     </Box>
   );
-}
+};
+
+export default FetchPage;

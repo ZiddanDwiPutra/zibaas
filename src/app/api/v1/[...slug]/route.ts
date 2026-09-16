@@ -107,14 +107,24 @@ export async function GET(
       const searchVal = searchParams.get('search');
       const textColumns = meta.columns.filter((c: any) => c.column_type === 'text').map((c: any) => c.column_name);
 
-      let whereClause = '';
-      let queryParams: any[] = [];
+      const conditions: string[] = [];
+      const queryParams: any[] = [];
 
       if (searchVal && textColumns.length > 0) {
-        const conditions = textColumns.map((col: string) => `"${col}" ILIKE $1`).join(' OR ');
-        whereClause = `WHERE ${conditions}`;
         queryParams.push(`%${searchVal}%`);
+        const searchConditions = textColumns.map((col: string) => `"${col}" ILIKE $${queryParams.length}`).join(' OR ');
+        conditions.push(`(${searchConditions})`);
       }
+
+      meta.columns.forEach((col: any) => {
+        const val = searchParams.get(col.column_name);
+        if (val && val !== 'all') {
+          queryParams.push(val);
+          conditions.push(`"${col.column_name}" = $${queryParams.length}`);
+        }
+      });
+
+      const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
       if (meta.enable_pagination) {
         const page = parseInt(searchParams.get('page') || '1', 10);

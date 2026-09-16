@@ -9,7 +9,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { getTheme } from '@/lib/theme';
 import { useProjectStore } from '@/lib/store';
 
-export default function ThemeRegistry({ children }: { children: React.ReactNode }) {
+const ThemeRegistry = ({ children }: { children: React.ReactNode }) => {
   const { themeMode } = useProjectStore();
   const [mounted, setMounted] = useState(false);
 
@@ -67,4 +67,6 @@ export default function ThemeRegistry({ children }: { children: React.ReactNode 
       </ThemeProvider>
     </CacheProvider>
   );
-}
+};
+
+export default ThemeRegistry;

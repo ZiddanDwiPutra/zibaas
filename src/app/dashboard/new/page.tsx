@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Box from '@mui/material/Box';
@@ -15,6 +15,7 @@ import Paper from '@mui/material/Paper';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import IconButton from '@mui/material/IconButton';
+import Grid from '@mui/material/Grid';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -27,7 +28,11 @@ interface ColumnInput {
   referencesTable?: string;
 }
 
-export default function NewTablePage() {
+interface ExistingTable {
+  table_name: string;
+}
+
+const NewTablePage = () => {
   const router = useRouter();
   const [tableName, setTableName] = useState('');
   const [columns, setColumns] = useState<ColumnInput[]>([
@@ -35,13 +40,13 @@ export default function NewTablePage() {
   ]);
   const [isDeploying, setIsDeploying] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [existingTables, setExistingTables] = useState<any[]>([]);
+  const [existingTables, setExistingTables] = useState<ExistingTable[]>([]);
   const [idType, setIdType] = useState<'serial' | 'uuid'>('serial');
   const [enablePagination, setEnablePagination] = useState(false);
   const [pageSize, setPageSize] = useState(10);
 
-  React.useEffect(() => {
-    fetch('/api/admin/tables')
+  useEffect(() => {
+    fetch('/api/admin/tables?simple=true')
       .then(res => res.json())
       .then(data => setExistingTables(data.tables || []))
       .catch(err => console.error(err));
@@ -110,15 +115,15 @@ export default function NewTablePage() {
   };
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, maxWidth: 800, mx: 'auto' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, maxWidth: 850, mx: 'auto', width: '100%' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <Link href="/dashboard" style={{ textDecoration: 'none' }}>
-          <IconButton sx={{ borderColor: 'divider', borderRadius: 2 }}>
+          <IconButton sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
             <ArrowBackIcon fontSize="small" />
           </IconButton>
         </Link>
         <Box>
-          <Typography variant="h5" sx={{ fontWeight: 600, color: 'text.primary' }}>
+          <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary', fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
             Create Table Schema
           </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
@@ -130,13 +135,13 @@ export default function NewTablePage() {
       <Paper
         variant="outlined"
         sx={{
-          p: 2,
-          bgcolor: (theme) => theme.palette.mode === 'light' ? '#e8f0fe' : '#2e2a28',
+          p: { xs: 2, sm: 2.5 },
+          bgcolor: (t) => t.palette.mode === 'light' ? '#e8f0fe' : '#2e2a28',
           borderColor: 'primary.main',
           borderRadius: 2,
         }}
       >
-        <Typography variant="body2" sx={{ color: (theme) => theme.palette.mode === 'light' ? '#1a73e8' : '#bcaaa4', fontSize: '0.85rem' }}>
+        <Typography variant="body2" sx={{ color: (t) => t.palette.mode === 'light' ? '#1a73e8' : '#bcaaa4', fontSize: '0.85rem' }}>
           <strong>Notice:</strong> System columns <code>id</code> (Auto-Incrementing Primary Key) and <code>created_at</code> (Timestamp) are added automatically to every table.
         </Typography>
       </Paper>
@@ -158,7 +163,7 @@ export default function NewTablePage() {
 
       <form onSubmit={handleSubmit}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-          <Paper variant="outlined" sx={{ p: 3, borderRadius: 2 }}>
+          <Paper variant="outlined" sx={{ p: { xs: 2.5, sm: 3 }, borderRadius: 2 }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 600, color: 'text.primary', mb: 2 }}>
               Table Information
             </Typography>
@@ -174,8 +179,16 @@ export default function NewTablePage() {
                 required
               />
 
-              <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap', alignItems: 'center' }}>
-                <FormControl size="small" sx={{ minWidth: 220 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  gap: 2,
+                  alignItems: { xs: 'stretch', sm: 'center' },
+                  flexWrap: 'wrap',
+                }}
+              >
+                <FormControl size="small" sx={{ width: { xs: '100%', sm: 220 } }}>
                   <InputLabel id="id-type-label">ID Type</InputLabel>
                   <Select
                     labelId="id-type-label"
@@ -196,6 +209,7 @@ export default function NewTablePage() {
                     />
                   }
                   label={<Typography variant="body2">Enable API Pagination</Typography>}
+                  sx={{ m: 0 }}
                 />
 
                 {enablePagination && (
@@ -205,15 +219,15 @@ export default function NewTablePage() {
                     size="small"
                     value={pageSize}
                     onChange={e => setPageSize(Math.max(1, parseInt(e.target.value, 10) || 10))}
-                    sx={{ width: 120 }}
+                    sx={{ width: { xs: '100%', sm: 120 } }}
                   />
                 )}
               </Box>
             </Box>
           </Paper>
 
-          <Paper variant="outlined" sx={{ p: 3, borderRadius: 2 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Paper variant="outlined" sx={{ p: { xs: 2.5, sm: 3 }, borderRadius: 2 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2.5, flexWrap: 'wrap', gap: 1 }}>
               <Typography variant="subtitle2" sx={{ fontWeight: 600, color: 'text.primary' }}>
                 Column Definitions
               </Typography>
@@ -227,94 +241,111 @@ export default function NewTablePage() {
                 <Box
                   key={idx}
                   sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 2,
                     p: 2,
                     bgcolor: 'background.default',
                     border: '1px solid',
                     borderColor: 'divider',
-                    borderRadius: 1.5,
-                    flexWrap: 'wrap',
+                    borderRadius: 2,
                   }}
                 >
-                  <Box sx={{ flex: 1, minWidth: 200 }}>
-                    <TextField
-                      fullWidth
-                      label="Column Name"
-                      placeholder="e.g. description, quantity"
-                      size="small"
-                      value={col.name}
-                      onChange={e =>
-                        updateColumn(idx, 'name', e.target.value.replace(/[^a-zA-Z0-9_]/g, ''))
-                      }
-                      required
-                    />
-                  </Box>
-
-                  <Box sx={{ minWidth: 150 }}>
-                    <Select
-                      fullWidth
-                      value={col.type}
-                      onChange={e => updateColumn(idx, 'type', e.target.value)}
-                      size="small"
-                    >
-                      <MenuItem value="text">Text (VARCHAR)</MenuItem>
-                      <MenuItem value="integer">Number (INTEGER)</MenuItem>
-                      <MenuItem value="boolean">Boolean (BOOLEAN)</MenuItem>
-                      <MenuItem value="timestamp">Timestamp (TIMESTAMP)</MenuItem>
-                      <MenuItem value="relation">Relation (FOREIGN KEY)</MenuItem>
-                    </Select>
-                  </Box>
-
-                  {col.type === 'relation' && (
-                    <Box sx={{ minWidth: 150 }}>
-                      <Select
+                  <Grid container spacing={1.5} sx={{ alignItems: 'center' }}>
+                    <Grid size={{ xs: 12, sm: 4, md: 4 }}>
+                      <TextField
                         fullWidth
-                        value={col.referencesTable || ''}
-                        onChange={e => updateColumn(idx, 'referencesTable', e.target.value)}
+                        label="Column Name"
+                        placeholder="e.g. description, quantity"
                         size="small"
-                        displayEmpty
-                      >
-                        <MenuItem value="" disabled>Select Target Table</MenuItem>
-                        {existingTables.map(t => (
-                          <MenuItem key={t.table_name} value={t.table_name}>
-                            {t.table_name}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </Box>
-                  )}
+                        value={col.name}
+                        onChange={e =>
+                          updateColumn(idx, 'name', e.target.value.replace(/[^a-zA-Z0-9_]/g, ''))
+                        }
+                        required
+                      />
+                    </Grid>
 
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={col.nullable}
-                          onChange={e => updateColumn(idx, 'nullable', e.target.checked)}
-                          size="small"
+                    <Grid size={{ xs: 12, sm: 4, md: 3 }}>
+                      <FormControl fullWidth size="small">
+                        <InputLabel id={`col-type-${idx}`}>Data Type</InputLabel>
+                        <Select
+                          labelId={`col-type-${idx}`}
+                          label="Data Type"
+                          value={col.type}
+                          onChange={e => updateColumn(idx, 'type', e.target.value)}
+                        >
+                          <MenuItem value="text">Text (VARCHAR)</MenuItem>
+                          <MenuItem value="integer">Number (INTEGER)</MenuItem>
+                          <MenuItem value="boolean">Boolean (BOOLEAN)</MenuItem>
+                          <MenuItem value="timestamp">Timestamp (TIMESTAMP)</MenuItem>
+                          <MenuItem value="relation">Relation (FOREIGN KEY)</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Grid>
+
+                    {col.type === 'relation' && (
+                      <Grid size={{ xs: 12, sm: 4, md: 3 }}>
+                        <FormControl fullWidth size="small">
+                          <InputLabel id={`target-table-${idx}`}>Target Table</InputLabel>
+                          <Select
+                            labelId={`target-table-${idx}`}
+                            label="Target Table"
+                            value={col.referencesTable || ''}
+                            onChange={e => updateColumn(idx, 'referencesTable', e.target.value)}
+                          >
+                            <MenuItem value="" disabled>Select Target Table</MenuItem>
+                            {existingTables.map(t => (
+                              <MenuItem key={t.table_name} value={t.table_name}>
+                                {t.table_name}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      </Grid>
+                    )}
+
+                    <Grid size={{ xs: 12, sm: 'grow' }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              checked={col.nullable}
+                              onChange={e => updateColumn(idx, 'nullable', e.target.checked)}
+                              size="small"
+                            />
+                          }
+                          label={<Typography variant="body2">Nullable</Typography>}
+                          sx={{ m: 0 }}
                         />
-                      }
-                      label={<Typography variant="body2">Nullable</Typography>}
-                    />
 
-                    <IconButton
-                      color="error"
-                      onClick={() => removeColumn(idx)}
-                      disabled={columns.length === 1}
-                      size="small"
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Box>
+                        <IconButton
+                          color="error"
+                          onClick={() => removeColumn(idx)}
+                          disabled={columns.length === 1}
+                          size="small"
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Box>
+                    </Grid>
+                  </Grid>
                 </Box>
               ))}
             </Box>
           </Paper>
 
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column-reverse', sm: 'row' },
+              justifyContent: 'flex-end',
+              gap: 2,
+            }}
+          >
             <Link href="/dashboard" style={{ textDecoration: 'none' }}>
-              <Button variant="outlined" color="inherit">
+              <Button
+                variant="outlined"
+                color="inherit"
+                sx={{ width: { xs: '100%', sm: 'auto' }, py: { xs: 1, sm: 0.75 } }}
+              >
                 Cancel
               </Button>
             </Link>
@@ -323,7 +354,12 @@ export default function NewTablePage() {
               variant="contained"
               startIcon={<RocketLaunchIcon />}
               disabled={isDeploying}
-              sx={{ bgcolor: 'primary.main', color: '#ffffff' }}
+              sx={{
+                bgcolor: 'primary.main',
+                color: '#ffffff',
+                width: { xs: '100%', sm: 'auto' },
+                py: { xs: 1, sm: 0.75 },
+              }}
             >
               {isDeploying ? 'Deploying...' : 'Deploy API'}
             </Button>
@@ -332,4 +368,6 @@ export default function NewTablePage() {
       </form>
     </Box>
   );
-}
+};
+
+export default NewTablePage;

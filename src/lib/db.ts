@@ -157,6 +157,40 @@ const generateUuid = () => {
   });
 };
 
+function filterMockList(sql: string, params: any[], tableName: string, list: any[]) {
+  let filtered = [...list];
+  const tableMeta = mockDb.tables.find(t => t.table_name === tableName);
+  const sqlLower = sql.toLowerCase();
+
+  if (sqlLower.includes('ilike') && params && params.length > 0) {
+    const searchVal = params.find(p => typeof p === 'string' && p.startsWith('%') && p.endsWith('%'));
+    if (searchVal && tableMeta) {
+      const keyword = searchVal.replace(/%/g, '').toLowerCase();
+      const textCols = mockDb.columns
+        .filter(c => c.table_id === tableMeta.id && c.column_type === 'text')
+        .map(c => c.column_name);
+      filtered = filtered.filter(row => {
+        return textCols.some(col => {
+          const val = row[col];
+          return val && String(val).toLowerCase().includes(keyword);
+        });
+      });
+    }
+  }
+
+  const colEqualsMatches = [...sql.matchAll(/"([a-zA-Z0-9_]+)"\s*=\s*\$([0-9]+)/g)];
+  for (const match of colEqualsMatches) {
+    const colName = match[1];
+    const paramIndex = parseInt(match[2], 10) - 1;
+    const expectedValue = params[paramIndex];
+    if (expectedValue !== undefined) {
+      filtered = filtered.filter(row => String(row[colName]) === String(expectedValue));
+    }
+  }
+
+  return filtered;
+}
+
 export async function query(sql: string, params: any[] = []): Promise<any> {
   if (pool) {
     await initDb();
@@ -204,24 +238,9 @@ export async function query(sql: string, params: any[] = []): Promise<any> {
     if (tableNameMatch) {
       const rawName = tableNameMatch[1];
       const tableName = rawName.replace(/["']/g, '');
-      let list = mockDb.records[tableName] || [];
-
-      if (sqlLower.includes('ilike') && params && params.length > 0) {
-        const searchKeyword = params[0].replace(/%/g, '').toLowerCase();
-        const tableMeta = mockDb.tables.find(t => t.table_name === tableName);
-        if (tableMeta) {
-          const textCols = mockDb.columns
-            .filter(c => c.table_id === tableMeta.id && c.column_type === 'text')
-            .map(c => c.column_name);
-          list = list.filter(row => {
-            return textCols.some(col => {
-              const val = row[col];
-              return val && String(val).toLowerCase().includes(searchKeyword);
-            });
-          });
-        }
-      }
-      return { rows: [{ count: list.length, total: list.length }] };
+      const list = mockDb.records[tableName] || [];
+      const filtered = filterMockList(sql, params, tableName, list);
+      return { rows: [{ count: filtered.length, total: filtered.length }] };
     }
   }
 
@@ -230,29 +249,14 @@ export async function query(sql: string, params: any[] = []): Promise<any> {
     if (!tableNameMatch) return { rows: [] };
     const rawName = tableNameMatch[1];
     const tableName = rawName.replace(/["']/g, '');
-    let list = mockDb.records[tableName] || [];
-
-    if (sqlLower.includes('ilike') && params && params.length > 0) {
-      const searchKeyword = params[0].replace(/%/g, '').toLowerCase();
-      const tableMeta = mockDb.tables.find(t => t.table_name === tableName);
-      if (tableMeta) {
-        const textCols = mockDb.columns
-          .filter(c => c.table_id === tableMeta.id && c.column_type === 'text')
-          .map(c => c.column_name);
-        list = list.filter(row => {
-          return textCols.some(col => {
-            const val = row[col];
-            return val && String(val).toLowerCase().includes(searchKeyword);
-          });
-        });
-      }
-    }
+    const list = mockDb.records[tableName] || [];
+    let resultList = filterMockList(sql, params, tableName, list);
 
     const orderMatch = sql.match(/order\s+by\s+([a-zA-Z0-9_]+)\s+(desc|asc)/i);
     if (orderMatch) {
       const field = orderMatch[1];
       const direction = orderMatch[2].toLowerCase();
-      list = [...list].sort((a, b) => {
+      resultList = [...resultList].sort((a, b) => {
         if (a[field] < b[field]) return direction === 'desc' ? 1 : -1;
         if (a[field] > b[field]) return direction === 'desc' ? -1 : 1;
         return 0;
@@ -263,18 +267,17 @@ export async function query(sql: string, params: any[] = []): Promise<any> {
     const offsetMatch = sql.match(/offset\s+(\$\d+|\d+)/i);
     
     if (limitMatch && offsetMatch && params && params.length >= 2) {
-      // Find the index of limit and offset parameters
       const limitParamIdx = parseInt(limitMatch[1].replace('$', ''), 10) - 1;
       const offsetParamIdx = parseInt(offsetMatch[1].replace('$', ''), 10) - 1;
       const limit = params[limitParamIdx];
       const offset = params[offsetParamIdx];
-      list = list.slice(offset, offset + limit);
+      resultList = resultList.slice(offset, offset + limit);
     } else if (params && params.length >= 2 && sqlLower.includes('limit') && sqlLower.includes('offset')) {
       const limit = params[params.length - 2];
       const offset = params[params.length - 1];
-      list = list.slice(offset, offset + limit);
+      resultList = resultList.slice(offset, offset + limit);
     }
-    return { rows: list };
+    return { rows: resultList };
   }
 
   return { rows: [] };

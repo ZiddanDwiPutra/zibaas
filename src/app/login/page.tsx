@@ -10,7 +10,7 @@ import Button from '@mui/material/Button';
 import Paper from '@mui/material/Paper';
 import CloudQueueIcon from '@mui/icons-material/CloudQueue';
 
-export default function LoginPage() {
+const LoginPage = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -49,12 +49,12 @@ export default function LoginPage() {
         alignItems: 'center',
         justifyContent: 'center',
         bgcolor: '#f8f9fa',
-        p: 3,
+        p: { xs: 2, sm: 3 },
       }}
     >
-      <Card variant="outlined" sx={{ maxWidth: 440, w: '100%', borderRadius: 2, p: 2, bgcolor: '#ffffff' }}>
+      <Card variant="outlined" sx={{ maxWidth: 440, width: '100%', borderRadius: 2, p: { xs: 1, sm: 2 }, bgcolor: '#ffffff' }}>
         <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, textAlignment: 'center' }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, textAlign: 'center' }}>
             <Box
               sx={{
                 width: 48,
@@ -69,7 +69,7 @@ export default function LoginPage() {
             >
               <CloudQueueIcon sx={{ fontSize: 28 }} />
             </Box>
-            <Typography variant="h5" sx={{ fontWeight: 600, color: '#202124', mt: 1 }}>
+            <Typography variant="h5" sx={{ fontWeight: 700, color: '#202124', mt: 1, fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
               Sign in
             </Typography>
             <Typography variant="body2" sx={{ color: '#5f6368' }}>
@@ -85,7 +85,7 @@ export default function LoginPage() {
                 borderColor: '#f2b8b5',
                 bgcolor: '#fce8e6',
                 color: '#c5221f',
-                borderRadius: 1,
+                borderRadius: 1.5,
               }}
             >
               <Typography variant="caption" sx={{ display: 'block', textAlign: 'center' }}>
@@ -120,7 +120,7 @@ export default function LoginPage() {
                 variant="contained"
                 type="submit"
                 disabled={isLoading}
-                sx={{ bgcolor: '#1a73e8', py: 1, mt: 1 }}
+                sx={{ bgcolor: '#1a73e8', py: 1.2, mt: 1, fontWeight: 600 }}
               >
                 {isLoading ? 'Signing in...' : 'Sign in'}
               </Button>
@@ -130,4 +130,6 @@ export default function LoginPage() {
       </Card>
     </Box>
   );
-}
+};
+
+export default LoginPage;

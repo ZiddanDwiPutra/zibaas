@@ -70,14 +70,14 @@ const SettingsPage = () => {
   }
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, maxWidth: 800, mx: 'auto' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, maxWidth: 800, mx: 'auto', width: '100%' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-        <SecurityIcon sx={{ color: 'primary.main', fontSize: 32 }} />
+        <SecurityIcon sx={{ color: 'primary.main', fontSize: { xs: 28, sm: 32 } }} />
         <Box>
-          <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary' }}>
+          <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary', fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
             API Gateway Settings
           </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
             Configure CORS policies, security whitelists, and gateway integrations
           </Typography>
         </Box>
@@ -89,7 +89,7 @@ const SettingsPage = () => {
         </Alert>
       )}
 
-      <Paper variant="outlined" sx={{ p: 4, borderRadius: 2, display: 'flex', flexDirection: 'column', gap: 3 }}>
+      <Paper variant="outlined" sx={{ p: { xs: 2.5, sm: 4 }, borderRadius: 2, display: 'flex', flexDirection: 'column', gap: 3 }}>
         <Box>
           <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'text.primary', mb: 0.5 }}>
             Cross-Origin Resource Sharing (CORS)
@@ -115,7 +115,7 @@ const SettingsPage = () => {
               </Typography>
             </Box>
           }
-          sx={{ alignItems: 'flex-start', mt: 1 }}
+          sx={{ alignItems: 'flex-start', mt: 1, m: 0 }}
         />
 
         {!corsAllowAll && (
@@ -146,6 +146,7 @@ const SettingsPage = () => {
             startIcon={isSaving ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />}
             onClick={handleSave}
             disabled={isSaving}
+            sx={{ width: { xs: '100%', sm: 'auto' }, py: { xs: 1, sm: 0.75 } }}
           >
             Save Settings
           </Button>
