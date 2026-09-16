@@ -14,12 +14,10 @@ import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Divider from '@mui/material/Divider';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
-import FormControl from '@mui/material/FormControl';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import MenuIcon from '@mui/icons-material/Menu';
+import CloseIcon from '@mui/icons-material/Close';
 import CloudQueueIcon from '@mui/icons-material/CloudQueue';
 import IconButton from '@mui/material/IconButton';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
@@ -30,9 +28,21 @@ import DarkModeIcon from '@mui/icons-material/DarkMode';
 import SendIcon from '@mui/icons-material/Send';
 import SettingsIcon from '@mui/icons-material/Settings';
 import RateReviewIcon from '@mui/icons-material/RateReview';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { useTheme } from '@mui/material/styles';
 import { useProjectStore } from '@/lib/store';
 
-const drawerWidth = 240;
+const DRAWER_WIDTH = 250;
+
+interface SidebarItemProps {
+  label: string;
+  href: string;
+  icon: React.ReactNode;
+  pathname: string;
+  isMinimized: boolean;
+  themeMode: 'light' | 'dark';
+  onClick?: () => void;
+}
 
 const SidebarItem = ({
   label,
@@ -41,25 +51,20 @@ const SidebarItem = ({
   pathname,
   isMinimized,
   themeMode,
-}: {
-  label: string;
-  href: string;
-  icon: React.ReactNode;
-  pathname: string;
-  isMinimized: boolean;
-  themeMode: 'light' | 'dark';
-}) => {
+  onClick,
+}: SidebarItemProps) => {
   const isSelected = pathname === href;
   return (
-    <ListItem disablePadding>
-      <Link href={href} style={{ textDecoration: 'none', width: '100%' }}>
+    <ListItem disablePadding sx={{ mb: 0.5 }}>
+      <Link href={href} style={{ textDecoration: 'none', width: '100%' }} onClick={onClick}>
         <ListItemButton
           selected={isSelected}
           sx={{
-            borderRadius: '0 20px 20px 0',
-            mr: 1,
+            borderRadius: isMinimized ? 2 : '0 24px 24px 0',
+            mr: isMinimized ? 0 : 1.5,
             justifyContent: isMinimized ? 'center' : 'initial',
-            px: isMinimized ? 1.5 : 2,
+            px: isMinimized ? 1.5 : 2.5,
+            py: 1.25,
             '&.Mui-selected': {
               bgcolor: themeMode === 'light' ? '#e8f0fe' : '#2e2a28',
               color: themeMode === 'light' ? '#1a73e8' : '#bcaaa4',
@@ -67,12 +72,12 @@ const SidebarItem = ({
             },
           }}
         >
-          <ListItemIcon sx={{ minWidth: isMinimized ? 0 : 36, mr: isMinimized ? 'auto' : 0, justifyContent: 'center' }}>
+          <ListItemIcon sx={{ minWidth: isMinimized ? 0 : 38, mr: isMinimized ? 'auto' : 0, justifyContent: 'center' }}>
             {icon}
           </ListItemIcon>
           {!isMinimized && (
             <ListItemText>
-              <Typography sx={{ fontSize: '0.85rem', fontWeight: isSelected ? 600 : 500 }}>
+              <Typography sx={{ fontSize: '0.9rem', fontWeight: isSelected ? 600 : 500 }}>
                 {label}
               </Typography>
             </ListItemText>
@@ -83,17 +88,32 @@ const SidebarItem = ({
   );
 };
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { themeMode, toggleThemeMode } = useProjectStore();
-  const [isMinimized, setIsMinimized] = useState(false);
+  const [isDesktopMinimized, setIsDesktopMinimized] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
     window.location.href = '/login';
   };
 
-  const currentDrawerWidth = isMinimized ? 64 : drawerWidth;
+  const handleDrawerToggle = () => {
+    if (isMobile) {
+      setMobileOpen(!mobileOpen);
+    } else {
+      setIsDesktopMinimized(!isDesktopMinimized);
+    }
+  };
+
+  const closeMobileDrawer = () => {
+    if (isMobile) {
+      setMobileOpen(false);
+    }
+  };
 
   const menuItems = [
     { label: 'Dashboard', href: '/dashboard', icon: <DashboardIcon fontSize="small" /> },
@@ -104,26 +124,102 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { label: 'User Guide', href: '/dashboard/guide', icon: <HelpIcon fontSize="small" /> },
   ];
 
+  const drawerContent = (isMini: boolean) => (
+    <Box sx={{ overflow: 'auto', display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
+      <Box sx={{ p: 1.5 }}>
+        {isMobile && (
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 1, py: 1.5, mb: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <CloudQueueIcon sx={{ color: themeMode === 'light' ? '#1a73e8' : '#bcaaa4' }} />
+              <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                Zibaas
+              </Typography>
+            </Box>
+            <IconButton onClick={() => setMobileOpen(false)} size="small">
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Box>
+        )}
+        <List sx={{ pt: isMobile ? 0 : 1 }}>
+          {menuItems.map((item) => (
+            <SidebarItem
+              key={item.href}
+              label={item.label}
+              href={item.href}
+              icon={item.icon}
+              pathname={pathname}
+              isMinimized={isMini}
+              themeMode={themeMode}
+              onClick={closeMobileDrawer}
+            />
+          ))}
+        </List>
+      </Box>
+
+      {!isMini && (
+        <Box sx={{ mt: 'auto', p: 2 }}>
+          <Divider sx={{ mb: 2 }} />
+          <Box
+            sx={{
+              mb: 1.5,
+              py: 1,
+              px: 1.5,
+              bgcolor: themeMode === 'light' ? '#f1f3f4' : '#2e2a28',
+              borderRadius: 1.5,
+              border: themeMode === 'light' ? '1px solid #dadce0' : '1px solid #3e3a38',
+            }}
+          >
+            <Typography variant="caption" sx={{ display: 'block', fontWeight: 'bold', color: themeMode === 'light' ? '#5f6368' : '#a8a29e' }}>
+              Version {process.env.version || '1.1.0'}
+            </Typography>
+          </Box>
+          <Box
+            sx={{
+              p: 1.5,
+              bgcolor: themeMode === 'light' ? '#f1f3f4' : '#2e2a28',
+              borderRadius: 1.5,
+              border: themeMode === 'light' ? '1px solid #dadce0' : '1px solid #3e3a38',
+            }}
+          >
+            <Typography variant="caption" sx={{ display: 'block', fontWeight: 'bold', color: themeMode === 'light' ? '#5f6368' : '#a8a29e', mb: 0.5 }}>
+              DATABASE STATUS
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box sx={{ width: 8, height: 8, bgcolor: '#34a853', borderRadius: '50%' }} />
+              <Typography variant="caption" sx={{ fontWeight: 600, color: themeMode === 'light' ? '#3c4043' : '#f5f5f4' }}>
+                Connected to Engine
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+      )}
+    </Box>
+  );
+
+  const desktopDrawerWidth = isDesktopMinimized ? 68 : DRAWER_WIDTH;
+
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: themeMode === 'light' ? '#f8f9fa' : '#121212' }}>
       <AppBar
         position="fixed"
         sx={{
-          zIndex: (theme) => theme.zIndex.drawer + 1,
+          zIndex: (t) => t.zIndex.drawer + 1,
           bgcolor: themeMode === 'light' ? '#1a73e8' : '#1e1b18',
           color: themeMode === 'light' ? '#ffffff' : '#f5f5f4',
-          height: 48,
+          height: 52,
           borderBottom: themeMode === 'light' ? 'none' : '1px solid #2e2a28',
         }}
       >
-        <Toolbar variant="dense" sx={{ minHeight: 48, px: 2, gap: 2 }}>
-          <IconButton color="inherit" onClick={() => setIsMinimized(!isMinimized)} edge="start" size="small">
+        <Toolbar variant="dense" sx={{ minHeight: 52, px: { xs: 1.5, sm: 2 }, gap: 1.5 }}>
+          <IconButton color="inherit" onClick={handleDrawerToggle} edge="start" size="small">
             <MenuIcon />
           </IconButton>
-          <CloudQueueIcon />
-          <Typography variant="subtitle1" noWrap component="div" sx={{ fontWeight: 600 }}>
-            Zibaas
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <CloudQueueIcon />
+            <Typography variant="subtitle1" noWrap component="div" sx={{ fontWeight: 700 }}>
+              Zibaas
+            </Typography>
+          </Box>
           <Box sx={{ flexGrow: 1 }} />
           <Tooltip title="Toggle theme">
             <IconButton color="inherit" onClick={toggleThemeMode} size="small">
@@ -138,86 +234,65 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </Toolbar>
       </AppBar>
 
-      <Drawer
-        variant="permanent"
-        sx={{
-          width: currentDrawerWidth,
-          flexShrink: 0,
-          [`& .MuiDrawer-paper`]: {
-            width: currentDrawerWidth,
-            boxSizing: 'border-box',
-            borderRight: themeMode === 'light' ? '1px solid #dadce0' : '1px solid #2e2a28',
-            bgcolor: themeMode === 'light' ? '#ffffff' : '#1e1b18',
-            top: 48,
-            height: 'calc(100vh - 48px)',
+      {isMobile ? (
+        <Drawer
+          variant="temporary"
+          open={mobileOpen}
+          onClose={closeMobileDrawer}
+          ModalProps={{ keepMounted: true }}
+          sx={{
+            display: { xs: 'block', md: 'none' },
+            '& .MuiDrawer-paper': {
+              width: { xs: '82vw', sm: 300 },
+              maxWidth: 320,
+              boxSizing: 'border-box',
+              bgcolor: themeMode === 'light' ? '#ffffff' : '#1e1b18',
+              borderRight: themeMode === 'light' ? '1px solid #dadce0' : '1px solid #2e2a28',
+            },
+          }}
+        >
+          {drawerContent(false)}
+        </Drawer>
+      ) : (
+        <Drawer
+          variant="permanent"
+          sx={{
+            display: { xs: 'none', md: 'block' },
+            width: desktopDrawerWidth,
+            flexShrink: 0,
+            '& .MuiDrawer-paper': {
+              width: desktopDrawerWidth,
+              boxSizing: 'border-box',
+              borderRight: themeMode === 'light' ? '1px solid #dadce0' : '1px solid #2e2a28',
+              bgcolor: themeMode === 'light' ? '#ffffff' : '#1e1b18',
+              top: 52,
+              height: 'calc(100vh - 52px)',
+              transition: 'width 0.2s ease-in-out',
+              overflowX: 'hidden',
+            },
             transition: 'width 0.2s ease-in-out',
-            overflowX: 'hidden',
-          },
-          transition: 'width 0.2s ease-in-out',
+          }}
+        >
+          {drawerContent(isDesktopMinimized)}
+        </Drawer>
+      )}
+
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          width: { xs: '100%', md: `calc(100% - ${desktopDrawerWidth}px)` },
+          minWidth: 0,
+          p: { xs: 2, sm: 3, md: 4 },
+          pt: { xs: 8.5, sm: 9, md: 9.5 },
         }}
       >
-        <Box sx={{ overflow: 'auto', display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
-          <Box sx={{ p: 1 }}>
-            <List>
-              {menuItems.map((item) => (
-                <SidebarItem
-                  key={item.href}
-                  label={item.label}
-                  href={item.href}
-                  icon={item.icon}
-                  pathname={pathname}
-                  isMinimized={isMinimized}
-                  themeMode={themeMode}
-                />
-              ))}
-            </List>
-          </Box>
-
-          {!isMinimized && (
-            <Box sx={{ mt: 'auto', p: 2 }}>
-              <Divider sx={{ mb: 2 }} />
-              <Box
-                sx={{
-                  mb: 1,
-                  py: 1,
-                  px: 1.5,
-                  bgcolor: themeMode === 'light' ? '#f1f3f4' : '#2e2a28',
-                  borderRadius: 1,
-                  border: themeMode === 'light' ? '1px solid #dadce0' : '1px solid #3e3a38',
-                }}
-              >
-                <Typography variant="caption" sx={{ display: 'block', fontWeight: 'bold', color: themeMode === 'light' ? '#5f6368' : '#a8a29e', mb: 0.5 }}>
-                  Version {process.env.version}
-                </Typography>
-              </Box>
-              <Box
-                sx={{
-                  p: 1.5,
-                  bgcolor: themeMode === 'light' ? '#f1f3f4' : '#2e2a28',
-                  borderRadius: 1,
-                  border: themeMode === 'light' ? '1px solid #dadce0' : '1px solid #3e3a38',
-                }}
-              >
-                <Typography variant="caption" sx={{ display: 'block', fontWeight: 'bold', color: themeMode === 'light' ? '#5f6368' : '#a8a29e', mb: 0.5 }}>
-                  DATABASE STATUS
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box sx={{ width: 8, height: 8, bgcolor: '#34a853', borderRadius: '50%' }} />
-                  <Typography variant="caption" sx={{ fontWeight: 600, color: themeMode === 'light' ? '#3c4043' : '#f5f5f4' }}>
-                    Connected to Engine
-                  </Typography>
-                </Box>
-              </Box>
-            </Box>
-          )}
-        </Box>
-      </Drawer>
-
-      <Box component="main" sx={{ flexGrow: 1, p: 4, pt: 8 }}>
-        <Box sx={{ maxWidth: 1200, mx: 'auto', mt: 2 }}>
+        <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
           {children}
         </Box>
       </Box>
     </Box>
   );
-}
+};
+
+export default DashboardLayout;

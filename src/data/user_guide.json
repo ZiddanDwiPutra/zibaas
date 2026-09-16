@@ -1,0 +1,117 @@
+[
+  {
+    "id": "schema-wizard",
+    "icon": "schema",
+    "tag": "Schema Design",
+    "title": "Designing Table Schemas",
+    "description": "ZiBaaS menyediakan wizard no-code untuk membangun tabel database kustom secara instan tanpa perlu menulis skrip SQL DDL manual.",
+    "items": [
+      {
+        "title": "Auto-Increment (SERIAL)",
+        "description": "Tipe ID numerik yang otomatis bertambah (1, 2, 3, dst.) setiap kali data baru dimasukkan. Cocok untuk tabel internal, data sederhana, atau kebutuhan ID berurutan."
+      },
+      {
+        "title": "UUID (v4)",
+        "description": "ID unik global berformat string 36-karakter acak. Sangat direkomendasikan untuk keamanan tinggi, sistem terdistribusi, serta mencegah ID mudah ditebak dari sisi klien."
+      }
+    ]
+  },
+  {
+    "id": "foreign-keys",
+    "icon": "account_tree",
+    "tag": "Data Relations",
+    "title": "Foreign Key & Table Relations (Cara Menghubungkan Tabel)",
+    "description": "Foreign Key (Kunci Tamu) digunakan untuk membuat relasi relasional antara dua tabel database (seperti One-to-Many). Ikuti panduan langkah demi langkah di bawah ini untuk menghubungkan tabel Anda:",
+    "items": [
+      {
+        "title": "Langkah 1: Buat Tabel Utama (Parent Table) Terlebih Dahulu",
+        "description": "Sebelum membuat relasi, pastikan tabel tujuan referensi sudah dibuat di sistem. Contoh: Buat tabel 'categories' dengan kolom 'name' (Text). Tabel ini otomatis memiliki primary key 'id'.",
+        "example": "Tabel Parent: categories (kolom: id, name)"
+      },
+      {
+        "title": "Langkah 2: Tambahkan Kolom Relasi pada Tabel Baru (Child Table)",
+        "description": "Buka menu '+ New Table' untuk membuat tabel yang berelasi (misal 'products'). Tambahkan kolom baru (beri nama 'category_id'), lalu pada pilihan Data Type pilih 'Relation (FOREIGN KEY)'.",
+        "example": "Kolom: category_id | Data Type: Relation (FOREIGN KEY)"
+      },
+      {
+        "title": "Langkah 3: Pilih Target Table Referensi",
+        "description": "Setelah memilih tipe Relation, dropdown 'Target Table' akan muncul secara otomatis. Pilih tabel tujuan yang ingin dihubungkan (misal: 'categories'). Kolom ini sekarang terikat resmi ke primary key 'id' tabel categories.",
+        "example": "Target Table: categories"
+      },
+      {
+        "title": "Langkah 4: Cara Memasukkan & Mengirim Data Berelasi (REST API)",
+        "description": "Saat menyimpan data baru ke tabel 'products' melalui Data Browser atau REST API POST, isi kolom 'category_id' dengan nilai ID yang valid dari tabel categories (misal ID 1).",
+        "example": "POST /api/v1/products -> payload: {\"name\": \"MacBook Pro\", \"price\": 25000000, \"category_id\": 1}"
+      },
+      {
+        "title": "Keuntungan & Validasi Integritas Data",
+        "description": "Foreign Key memastikan bahwa nilai yang dimasukkan ke kolom relasi selalu valid. Jika Anda memasukkan ID yang tidak ada pada tabel referensi, database akan menolaknya untuk mencegah data yatim (orphaned data).",
+        "example": "Contoh relasi lain: orders -> customer_id (customers), comments -> post_id (posts)"
+      }
+    ]
+  },
+  {
+    "id": "rest-apis",
+    "icon": "api",
+    "tag": "Integration",
+    "title": "CRUD RESTful APIs",
+    "description": "Setiap tabel yang Anda buat otomatis memiliki endpoint REST API siap pakai yang dapat diakses langsung oleh aplikasi web atau mobile Anda.",
+    "endpoints": [
+      { "method": "GET", "path": "/api/v1/{table_name}", "description": "Mengambil semua baris data dari tabel." },
+      { "method": "GET", "path": "/api/v1/{table_name}/{id}", "description": "Mengambil satu baris data spesifik berdasarkan ID." },
+      { "method": "POST", "path": "/api/v1/{table_name}", "description": "Menyimpan baris data baru dengan mengirimkan JSON payload." },
+      { "method": "PUT", "path": "/api/v1/{table_name}/{id}", "description": "Memperbarui baris data yang ada berdasarkan ID." },
+      { "method": "DELETE", "path": "/api/v1/{table_name}/{id}", "description": "Menghapus baris data permanen berdasarkan ID." }
+    ]
+  },
+  {
+    "id": "search-pagination",
+    "icon": "search",
+    "tag": "Data Query",
+    "title": "Search & Pagination Settings",
+    "description": "Mengelola dan mengambil data berskala besar secara efisien menggunakan fitur pencarian teks multi-kolom dan pagination server-side.",
+    "items": [
+      {
+        "title": "Pencarian Teks (Fuzzy Search)",
+        "description": "Gunakan parameter query ?search=keyword untuk melakukan pencarian teks secara fleksibel dan case-insensitive pada kolom bertipe teks.",
+        "example": "GET /api/v1/products?search=macbook"
+      },
+      {
+        "title": "Pagination Otomatis",
+        "description": "Aktifkan pagination pada tabel untuk membagi data per halaman dengan parameter ?page=1&limit=10.",
+        "example": "GET /api/v1/products?page=1&limit=10"
+      }
+    ]
+  },
+  {
+    "id": "cors-security",
+    "icon": "security",
+    "tag": "Security",
+    "title": "CORS & Security Configuration",
+    "description": "Atur kebijakan Cross-Origin Resource Sharing (CORS) untuk menentukan domain web mana saja yang diizinkan mengakses REST API Anda.",
+    "items": [
+      {
+        "title": "Allow All Origins (*)",
+        "description": "Mengizinkan request API dari domain web apa pun. Ideal untuk proses pengembangan lokal, pengujian frontend, atau open API."
+      },
+      {
+        "title": "Domain Whitelist",
+        "description": "Membatasi akses API hanya dari domain tertentu (contoh: https://myfrontend.com). Request dari domain lain akan otomatis ditolak oleh browser."
+      }
+    ]
+  },
+  {
+    "id": "database-storage",
+    "icon": "storage",
+    "tag": "Database",
+    "title": "Database Storage & Connections",
+    "description": "ZiBaaS mendukung penyimpanan in-memory mock untuk sandbox instan serta koneksi langsung ke PostgreSQL server (seperti Neon Database).",
+    "items": [
+      {
+        "title": "Environment Variable Setup",
+        "description": "Tambahkan variabel NEON_DATABASE_URL pada file .env di root project untuk mengaktifkan koneksi database persisten PostgreSQL.",
+        "example": "NEON_DATABASE_URL=\"postgresql://user:password@host/dbname?sslmode=require\""
+      }
+    ]
+  }
+]
