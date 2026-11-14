@@ -6,9 +6,50 @@ interface MockColumn {
   column_name: string;
   column_type: string;
   is_nullable: boolean;
+  is_unique?: boolean;
   references_table?: string | null;
   created_at: string;
 }
+
+export interface ServiceFilter {
+  column: string;
+  source: 'auth' | 'path' | 'query';
+  param_name?: string; // name of path parameter or query parameter
+  operator?: '=' | 'ILIKE' | '>' | '<' | '>=' | '<=';
+}
+
+export interface UpdateRule {
+  allowed_fields?: string[]; // Column names that client payload is allowed to update
+  fixed_fields?: Record<string, any>; // Static values always applied on update (e.g. status: 'done')
+}
+
+export interface MockService {
+  id: number;
+  table_id: number;
+  service_name: string;
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  description?: string;
+  require_auth: boolean;
+  filters: ServiceFilter[];
+  update_rule?: UpdateRule;
+  created_at: string;
+}
+
+export interface AllowedEndpoints {
+  allow_get_list: boolean;
+  allow_get_id: boolean;
+  allow_post: boolean;
+  allow_put: boolean;
+  allow_delete: boolean;
+}
+
+export const DEFAULT_ALLOWED_ENDPOINTS: AllowedEndpoints = {
+  allow_get_list: true,
+  allow_get_id: true,
+  allow_post: true,
+  allow_put: true,
+  allow_delete: true,
+};
 
 interface MockTable {
   id: number;
@@ -16,6 +57,9 @@ interface MockTable {
   id_type?: 'serial' | 'uuid';
   enable_pagination?: boolean;
   page_size?: number;
+  enable_auth?: boolean;
+  user_id_column?: string | null;
+  allowed_endpoints?: AllowedEndpoints;
   created_at: string;
 }
 
@@ -23,10 +67,12 @@ declare global {
   var _mockDb: {
     tables: MockTable[];
     columns: MockColumn[];
+    services: MockService[];
     records: Record<string, any[]>;
     settings: Record<string, string>;
     tableCounter: number;
     columnCounter: number;
+    serviceCounter: number;
   } | undefined;
 }
 
@@ -34,6 +80,7 @@ if (!globalThis._mockDb) {
   globalThis._mockDb = {
     tables: [],
     columns: [],
+    services: [],
     records: {},
     settings: {
       'cors_allow_all': 'true',
@@ -41,6 +88,7 @@ if (!globalThis._mockDb) {
     },
     tableCounter: 1,
     columnCounter: 1,
+    serviceCounter: 1,
   };
 
   const feedbackTableId = globalThis._mockDb.tableCounter++;
@@ -79,6 +127,8 @@ async function initDb() {
         id_type VARCHAR(50) DEFAULT 'serial',
         enable_pagination BOOLEAN DEFAULT FALSE,
         page_size INTEGER DEFAULT 10,
+        enable_auth BOOLEAN DEFAULT FALSE,
+        user_id_column VARCHAR(255),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -102,6 +152,9 @@ async function initDb() {
       ALTER TABLE system_columns ADD COLUMN IF NOT EXISTS references_table VARCHAR(255)
     `);
     await pool.query(`
+      ALTER TABLE system_columns ADD COLUMN IF NOT EXISTS is_unique BOOLEAN DEFAULT FALSE
+    `);
+    await pool.query(`
       ALTER TABLE system_tables ADD COLUMN IF NOT EXISTS id_type VARCHAR(50) DEFAULT 'serial'
     `);
     await pool.query(`
@@ -109,6 +162,32 @@ async function initDb() {
     `);
     await pool.query(`
       ALTER TABLE system_tables ADD COLUMN IF NOT EXISTS page_size INTEGER DEFAULT 10
+    `);
+    await pool.query(`
+      ALTER TABLE system_tables ADD COLUMN IF NOT EXISTS enable_auth BOOLEAN DEFAULT FALSE
+    `);
+    await pool.query(`
+      ALTER TABLE system_tables ADD COLUMN IF NOT EXISTS user_id_column VARCHAR(255)
+    `);
+    await pool.query(`
+      ALTER TABLE system_tables ADD COLUMN IF NOT EXISTS allowed_endpoints JSONB DEFAULT '{"allow_get_list": true, "allow_get_id": true, "allow_post": true, "allow_put": true, "allow_delete": true}'
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS system_services (
+        id SERIAL PRIMARY KEY,
+        table_id INTEGER REFERENCES system_tables(id) ON DELETE CASCADE,
+        service_name VARCHAR(255) NOT NULL,
+        method VARCHAR(10) DEFAULT 'GET',
+        description TEXT,
+        require_auth BOOLEAN DEFAULT FALSE,
+        filters JSONB DEFAULT '[]',
+        update_rule JSONB DEFAULT '{}',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(table_id, service_name, method)
+      )
+    `);
+    await pool.query(`
+      ALTER TABLE system_services ADD COLUMN IF NOT EXISTS update_rule JSONB DEFAULT '{}'
     `);
 
     const settingsCheck = await pool.query("SELECT COUNT(*) FROM system_settings WHERE key = 'cors_allow_all'");
@@ -285,14 +364,28 @@ export async function query(sql: string, params: any[] = []): Promise<any> {
 
 export async function createTable(
   tableName: string,
-  columns: { name: string; type: string; nullable?: boolean; referencesTable?: string }[],
-  config?: { idType?: 'serial' | 'uuid'; enablePagination?: boolean; pageSize?: number }
+  columns: { name: string; type: string; nullable?: boolean; isUnique?: boolean; referencesTable?: string }[],
+  config?: {
+    idType?: 'serial' | 'uuid';
+    enablePagination?: boolean;
+    pageSize?: number;
+    enableAuth?: boolean;
+    userIdColumn?: string | null;
+    allowedEndpoints?: AllowedEndpoints;
+  }
 ): Promise<void> {
   const safeName = tableName.replace(/[^a-zA-Z0-9_]/g, '');
   const prefixedTable = `user_${safeName}`;
   const idType = config?.idType || 'serial';
   const enablePagination = config?.enablePagination || false;
   const pageSize = config?.pageSize || 10;
+  const enableAuth = config?.enableAuth || false;
+  const userIdColumn = config?.userIdColumn || null;
+  if (columns.some(c => c.name === 'id' || c.name === 'created_at')) {
+    throw new Error("System columns 'id' and 'created_at' are added automatically. Do not include them in the column definitions.");
+  }
+
+  const allowedEndpoints = config?.allowedEndpoints || DEFAULT_ALLOWED_ENDPOINTS;
 
   if (pool) {
     await initDb();
@@ -300,15 +393,15 @@ export async function createTable(
     try {
       await client.query('BEGIN');
       const tableRes = await client.query(
-        'INSERT INTO system_tables (table_name, id_type, enable_pagination, page_size) VALUES ($1, $2, $3, $4) RETURNING id',
-        [safeName, idType, enablePagination, pageSize]
+        'INSERT INTO system_tables (table_name, id_type, enable_pagination, page_size, enable_auth, user_id_column, allowed_endpoints) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
+        [safeName, idType, enablePagination, pageSize, enableAuth, userIdColumn, JSON.stringify(allowedEndpoints)]
       );
       const tableId = tableRes.rows[0].id;
 
       for (const col of columns) {
         await client.query(
-          'INSERT INTO system_columns (table_id, column_name, column_type, is_nullable, references_table) VALUES ($1, $2, $3, $4, $5)',
-          [tableId, col.name, col.type, col.nullable !== false, col.referencesTable || null]
+          'INSERT INTO system_columns (table_id, column_name, column_type, is_nullable, is_unique, references_table) VALUES ($1, $2, $3, $4, $5, $6)',
+          [tableId, col.name, col.type, col.nullable !== false, !!col.isUnique, col.referencesTable || null]
         );
       }
 
@@ -330,6 +423,7 @@ export async function createTable(
         }
 
         if (col.nullable === false) sqlDef += ' NOT NULL';
+        if (col.isUnique) sqlDef += ' UNIQUE';
         return sqlDef;
       }));
 
@@ -356,6 +450,9 @@ export async function createTable(
     id_type: idType,
     enable_pagination: enablePagination,
     page_size: pageSize,
+    enable_auth: enableAuth,
+    user_id_column: userIdColumn,
+    allowed_endpoints: allowedEndpoints,
     created_at: new Date().toISOString(),
   };
 
@@ -368,6 +465,7 @@ export async function createTable(
       column_name: col.name,
       column_type: col.type,
       is_nullable: col.nullable !== false,
+      is_unique: !!col.isUnique,
       references_table: col.referencesTable || null,
       created_at: new Date().toISOString(),
     });
@@ -402,6 +500,150 @@ export async function dropTable(tableId: number, tableName: string): Promise<voi
   delete mockDb.records[prefixedTable];
 }
 
+export async function updateTableConfig(
+  tableId: number,
+  config: {
+    idType?: 'serial' | 'uuid';
+    enablePagination?: boolean;
+    pageSize?: number;
+    enableAuth?: boolean;
+    userIdColumn?: string | null;
+    allowedEndpoints?: AllowedEndpoints;
+  }
+): Promise<void> {
+  if (pool) {
+    await initDb();
+    await pool.query(
+      `UPDATE system_tables 
+       SET id_type = COALESCE($1, id_type),
+           enable_pagination = COALESCE($2, enable_pagination),
+           page_size = COALESCE($3, page_size),
+           enable_auth = COALESCE($4, enable_auth),
+           user_id_column = $5,
+           allowed_endpoints = COALESCE($6, allowed_endpoints)
+       WHERE id = $7`,
+      [
+        config.idType,
+        config.enablePagination,
+        config.pageSize,
+        config.enableAuth,
+        config.userIdColumn,
+        config.allowedEndpoints ? JSON.stringify(config.allowedEndpoints) : null,
+        tableId,
+      ]
+    );
+    return;
+  }
+
+  const match = mockDb.tables.find(t => t.id === tableId);
+  if (match) {
+    if (config.idType !== undefined) match.id_type = config.idType;
+    if (config.enablePagination !== undefined) match.enable_pagination = config.enablePagination;
+    if (config.pageSize !== undefined) match.page_size = config.pageSize;
+    if (config.enableAuth !== undefined) match.enable_auth = config.enableAuth;
+    if (config.userIdColumn !== undefined) match.user_id_column = config.userIdColumn;
+    if (config.allowedEndpoints !== undefined) match.allowed_endpoints = config.allowedEndpoints;
+  }
+}
+
+export async function addColumnToTable(
+  tableId: number,
+  column: {
+    name: string;
+    type: string;
+    nullable?: boolean;
+    isUnique?: boolean;
+    referencesTable?: string | null;
+  }
+): Promise<void> {
+  const safeColName = column.name.replace(/[^a-zA-Z0-9_]/g, '');
+  if (!safeColName) throw new Error('Invalid column name');
+
+  if (safeColName === 'id' || safeColName === 'created_at') {
+    throw new Error(`Column '${safeColName}' already exists as a system primary/timestamp column`);
+  }
+
+  const allowedTypes = ['text', 'integer', 'boolean', 'timestamp', 'relation'];
+  const type = allowedTypes.includes(column.type) ? column.type : 'text';
+  const isNullable = column.nullable !== false;
+  const isUnique = !!column.isUnique;
+  const referencesTable = type === 'relation' ? column.referencesTable : null;
+
+  if (pool) {
+    await initDb();
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const tableRes = await client.query('SELECT table_name FROM system_tables WHERE id = $1', [tableId]);
+      if (tableRes.rows.length === 0) throw new Error('Table not found');
+      const tableName = tableRes.rows[0].table_name;
+      const prefixedTable = `user_${tableName}`;
+
+      // Check duplicate column
+      const dupCheck = await client.query(
+        'SELECT id FROM system_columns WHERE table_id = $1 AND column_name = $2',
+        [tableId, safeColName]
+      );
+      if (dupCheck.rows.length > 0) throw new Error(`Column '${safeColName}' already exists in this table`);
+
+      await client.query(
+        'INSERT INTO system_columns (table_id, column_name, column_type, is_nullable, is_unique, references_table) VALUES ($1, $2, $3, $4, $5, $6)',
+        [tableId, safeColName, type, isNullable, isUnique, referencesTable]
+      );
+
+      let sqlDef = `"${safeColName}" `;
+      if (type === 'relation' && referencesTable) {
+        const refRes = await client.query('SELECT id_type FROM system_tables WHERE table_name = $1', [referencesTable]);
+        const refIdType = refRes.rows[0]?.id_type || 'serial';
+        const fkType = refIdType === 'uuid' ? 'UUID' : 'INTEGER';
+        sqlDef += `${fkType} REFERENCES "user_${referencesTable}"(id) ON DELETE SET NULL`;
+      } else if (type === 'integer') {
+        sqlDef += 'INTEGER';
+      } else if (type === 'boolean') {
+        sqlDef += 'BOOLEAN';
+      } else if (type === 'timestamp') {
+        sqlDef += 'TIMESTAMP';
+      } else {
+        sqlDef += 'TEXT';
+      }
+
+      if (!isNullable) {
+        sqlDef += ' NOT NULL DEFAULT \'\'';
+      }
+
+      if (isUnique) {
+        sqlDef += ' UNIQUE';
+      }
+
+      await client.query(`ALTER TABLE "${prefixedTable}" ADD COLUMN IF NOT EXISTS ${sqlDef}`);
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
+    return;
+  }
+
+  const tableMeta = mockDb.tables.find(t => t.id === tableId);
+  if (!tableMeta) throw new Error('Table not found');
+
+  const dup = mockDb.columns.find(c => c.table_id === tableId && c.column_name === safeColName);
+  if (dup) throw new Error(`Column '${safeColName}' already exists in this table`);
+
+  mockDb.columns.push({
+    id: mockDb.columnCounter++,
+    table_id: tableId,
+    column_name: safeColName,
+    column_type: type,
+    is_nullable: isNullable,
+    is_unique: isUnique,
+    references_table: referencesTable || null,
+    created_at: new Date().toISOString(),
+  });
+}
+
 export async function insertRow(tableName: string, data: Record<string, any>): Promise<any> {
   const safeName = tableName.replace(/[^a-zA-Z0-9_]/g, '');
   const prefixedTable = `user_${safeName}`;
@@ -413,6 +655,9 @@ export async function insertRow(tableName: string, data: Record<string, any>): P
       [safeName]
     );
     const validColumns = columnsConfig.rows.map((r: any) => r.column_name);
+    if (!validColumns.includes('id')) {
+      validColumns.push('id');
+    }
     const fields = Object.keys(data).filter(key => validColumns.includes(key));
     const values = fields.map(key => data[key]);
 
@@ -431,8 +676,9 @@ export async function insertRow(tableName: string, data: Record<string, any>): P
   if (!tableMeta) throw new Error(`Table ${safeName} not found`);
 
   const cols = mockDb.columns.filter(c => c.table_id === tableMeta.id);
+  const customId = data.id !== undefined && data.id !== null && data.id !== '' ? data.id : null;
   const newRow: Record<string, any> = {
-    id: tableMeta.id_type === 'uuid' ? generateUuid() : mockDb.records[prefixedTable].length + 1,
+    id: customId !== null ? customId : (tableMeta.id_type === 'uuid' ? generateUuid() : mockDb.records[prefixedTable].length + 1),
     created_at: new Date().toISOString(),
   };
 
@@ -456,21 +702,39 @@ export async function updateRow(tableName: string, id: any, data: Record<string,
   const prefixedTable = `user_${safeName}`;
 
   if (pool) {
-    const columnsConfig = await pool.query(
-      `SELECT column_name FROM system_columns 
-       WHERE table_id = (SELECT id FROM system_tables WHERE table_name = $1)`,
+    const tableRes = await pool.query(
+      `SELECT id, id_type FROM system_tables WHERE table_name = $1`,
       [safeName]
     );
+    const tableMeta = tableRes.rows[0];
+
+    const columnsConfig = await pool.query(
+      `SELECT column_name FROM system_columns WHERE table_id = $1`,
+      [tableMeta?.id]
+    );
     const validColumns = columnsConfig.rows.map((r: any) => r.column_name);
+    if (!validColumns.includes('id')) {
+      validColumns.push('id');
+    }
     const fields = Object.keys(data).filter(key => validColumns.includes(key));
-    const values = fields.map(key => data[key]);
 
     if (fields.length === 0) {
       throw new Error('No valid fields to update');
     }
 
-    const setClauses = fields.map((f, i) => `"${f}" = $${i + 1}`).join(', ');
-    const queryStr = `UPDATE "${prefixedTable}" SET ${setClauses} WHERE id = $${fields.length + 1} RETURNING *`;
+    const setClauses: string[] = [];
+    const values: any[] = [];
+    for (const key of fields) {
+      values.push(data[key]);
+      if (key === 'id' && tableMeta?.id_type === 'uuid') {
+        setClauses.push(`"id" = $${values.length}::uuid`);
+      } else {
+        setClauses.push(`"${key}" = $${values.length}`);
+      }
+    }
+
+    const wherePlaceholder = `$${values.length + 1}${tableMeta?.id_type === 'uuid' ? '::uuid' : ''}`;
+    const queryStr = `UPDATE "${prefixedTable}" SET ${setClauses.join(', ')} WHERE id = ${wherePlaceholder} RETURNING *`;
     const res = await pool.query(queryStr, [...values, id]);
     return res.rows[0];
   }
@@ -484,6 +748,10 @@ export async function updateRow(tableName: string, id: any, data: Record<string,
 
   const cols = mockDb.columns.filter(c => c.table_id === tableMeta.id);
   const updatedRow = { ...list[index] };
+
+  if (data.id !== undefined && data.id !== null && data.id !== '') {
+    updatedRow.id = data.id;
+  }
 
   for (const c of cols) {
     if (data[c.column_name] !== undefined) {
@@ -510,6 +778,85 @@ export async function deleteRow(tableName: string, id: any): Promise<void> {
   if (mockDb.records[prefixedTable]) {
     mockDb.records[prefixedTable] = mockDb.records[prefixedTable].filter(r => String(r.id) !== String(id));
   }
+}
+
+export async function getServicesByTableId(tableId: number): Promise<MockService[]> {
+  if (pool) {
+    await initDb();
+    const res = await pool.query(
+      'SELECT id, table_id, service_name, method, description, require_auth, filters, update_rule, created_at FROM system_services WHERE table_id = $1 ORDER BY id ASC',
+      [tableId]
+    );
+    return res.rows.map((r: any) => ({
+      ...r,
+      filters: typeof r.filters === 'string' ? JSON.parse(r.filters) : r.filters || [],
+      update_rule: typeof r.update_rule === 'string' ? JSON.parse(r.update_rule) : r.update_rule || {},
+    }));
+  }
+  return mockDb.services.filter(s => s.table_id === tableId);
+}
+
+export async function createService(
+  tableId: number,
+  service: {
+    service_name: string;
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE';
+    description?: string;
+    require_auth?: boolean;
+    filters?: ServiceFilter[];
+    update_rule?: UpdateRule;
+  }
+): Promise<MockService> {
+  const safeServiceName = service.service_name.replace(/[^a-zA-Z0-9_-]/g, '').toLowerCase();
+  const method = service.method || 'GET';
+  const requireAuth = !!service.require_auth;
+  const filters = service.filters || [];
+  const updateRule = service.update_rule || {};
+
+  if (pool) {
+    await initDb();
+    const res = await pool.query(
+      `INSERT INTO system_services (table_id, service_name, method, description, require_auth, filters, update_rule)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING id, table_id, service_name, method, description, require_auth, filters, update_rule, created_at`,
+      [tableId, safeServiceName, method, service.description || '', requireAuth, JSON.stringify(filters), JSON.stringify(updateRule)]
+    );
+    return {
+      ...res.rows[0],
+      filters: typeof res.rows[0].filters === 'string' ? JSON.parse(res.rows[0].filters) : res.rows[0].filters || [],
+      update_rule: typeof res.rows[0].update_rule === 'string' ? JSON.parse(res.rows[0].update_rule) : res.rows[0].update_rule || {},
+    };
+  }
+
+  const existingIdx = mockDb.services.findIndex(
+    s => s.table_id === tableId && s.service_name === safeServiceName && s.method === method
+  );
+  if (existingIdx !== -1) {
+    throw new Error(`Service '${safeServiceName}' with method ${method} already exists for this table`);
+  }
+
+  const newService: MockService = {
+    id: mockDb.serviceCounter++,
+    table_id: tableId,
+    service_name: safeServiceName,
+    method,
+    description: service.description || '',
+    require_auth: requireAuth,
+    filters,
+    update_rule: updateRule,
+    created_at: new Date().toISOString(),
+  };
+  mockDb.services.push(newService);
+  return newService;
+}
+
+export async function deleteService(serviceId: number): Promise<void> {
+  if (pool) {
+    await initDb();
+    await pool.query('DELETE FROM system_services WHERE id = $1', [serviceId]);
+    return;
+  }
+  mockDb.services = mockDb.services.filter(s => s.id !== serviceId);
 }
 
 export async function getSetting(key: string): Promise<string> {

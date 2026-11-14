@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, createTable } from '@/lib/db';
+import { formatBadRequestError } from '@/lib/error-utils';
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,7 +19,7 @@ export async function GET(request: NextRequest) {
       }
       const table = tableRes.rows[0];
       const columnsRes = await query(
-        'SELECT column_name, column_type, is_nullable, references_table FROM system_columns WHERE table_id = $1',
+        'SELECT column_name, column_type, is_nullable, is_unique, references_table FROM system_columns WHERE table_id = $1',
         [table.id]
       );
       const rowsCountRes = await query(`SELECT COUNT(*) as count FROM "user_${table.table_name}"`).catch(() => ({ rows: [{ count: 0 }] }));
@@ -69,7 +70,7 @@ export async function GET(request: NextRequest) {
     const fullTables = await Promise.all(
       tables.map(async (table: any) => {
         const columnsRes = await query(
-          'SELECT column_name, column_type, is_nullable, references_table FROM system_columns WHERE table_id = $1',
+          'SELECT column_name, column_type, is_nullable, is_unique, references_table FROM system_columns WHERE table_id = $1',
           [table.id]
         );
         const rowsCountRes = await query(`SELECT COUNT(*) as count FROM "user_${table.table_name}"`).catch(() => ({ rows: [{ count: 0 }] }));
@@ -118,7 +119,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, columns, idType, enablePagination, pageSize } = body;
+    const { name, columns, idType, enablePagination, pageSize, enableAuth, userIdColumn } = body;
 
     if (!name || typeof name !== 'string') {
       return NextResponse.json({ error: 'Invalid table name' }, { status: 400 });
@@ -147,6 +148,7 @@ export async function POST(request: NextRequest) {
         name: safeColName,
         type,
         nullable: col.nullable !== false,
+        isUnique: !!col.isUnique,
         referencesTable: col.referencesTable || null,
       };
     });
@@ -155,10 +157,13 @@ export async function POST(request: NextRequest) {
       idType: idType === 'uuid' ? 'uuid' : 'serial',
       enablePagination: !!enablePagination,
       pageSize: typeof pageSize === 'number' ? pageSize : 10,
+      enableAuth: !!enableAuth,
+      userIdColumn: userIdColumn ? String(userIdColumn).trim() : null,
     });
 
     return NextResponse.json({ success: true }, { status: 201 });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const formatted = formatBadRequestError(error);
+    return NextResponse.json({ error: formatted }, { status: 400 });
   }
 }
