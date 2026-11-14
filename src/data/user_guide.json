@@ -101,6 +101,73 @@
     ]
   },
   {
+    "id": "table-auth-rls",
+    "icon": "vpn_key",
+    "tag": "Authentication & RLS",
+    "title": "Table Access & Row-Level Security (RLS)",
+    "description": "Atur kontrol akses setiap tabel database secara fleksibel antara mode publik atau terproteksi sesi pengguna.",
+    "items": [
+      {
+        "title": "Mode Open (Public)",
+        "description": "Tabel dapat diakses secara publik (menggunakan x-api-key jika dikonfigurasi) tanpa perlu token autentikasi pengguna."
+      },
+      {
+        "title": "Mode Protected (User Session Required)",
+        "description": "Setiap request wajib menyertakan Authorization: Bearer <session_token>. ZiBaaS secara otomatis memfilter query database (Row-Level Security) sehingga pengguna hanya dapat membaca, mengedit, atau menghapus data milik mereka sendiri berdasarkan kolom pemilik (misal: user_id)."
+      },
+      {
+        "title": "Client Auth Encryption Key",
+        "description": "Diatur pada menu Settings. Key rahasia 32-byte ini digunakan oleh aplikasi klien kamu untuk mengenkripsi payload login (AES-256-GCM) saat memanggil POST /api/v1/auth/session."
+      }
+    ]
+  },
+  {
+    "id": "custom-services",
+    "icon": "tune",
+    "tag": "Custom Endpoints",
+    "title": "Custom API Services & Dynamic Filters",
+    "description": "Di setiap tabel, kamu dapat membangun endpoint API kustom dengan filter dinamis sesuai kebutuhan aplikasi tanpa menulis backend baru.",
+    "items": [
+      {
+        "title": "🔐 Filter Auth (User Session ID)",
+        "description": "Menyaring baris data di mana kolom tertentu sama dengan user_id pengguna yang sedang login dari session token.",
+        "example": "GET /api/v1/projects/services/my-projects (Filter: user_id = :auth_user_id)"
+      },
+      {
+        "title": "🛣️ Filter Path Parameter (/:param)",
+        "description": "Menyaring data berdasarkan variabel dinamis pada URL path.",
+        "example": "GET /api/v1/articles/services/by-category/:cat_id (Filter: category_id = :cat_id)"
+      },
+      {
+        "title": "🔎 Filter Query Parameter (?param=val)",
+        "description": "Menyaring data berdasarkan query parameter URL dengan operator pembanding (=, LIKE, >, <).",
+        "example": "GET /api/v1/tasks/services/filtered?status=done (Filter: status = 'done')"
+      },
+      {
+        "title": "✏️ Custom Update Action (PUT Service)",
+        "description": "Memperbarui kolom tertentu setelah filter WHERE terpenuhi. Kamu bisa membatasi kolom apa saja yang diizinkan dikirim oleh payload klien (Allowed Fields) dan menginjeksi nilai statis otomatis (Fixed Fields).",
+        "example": "PUT /api/v1/users/services/update-profile (WHERE: id = :auth_user_id | SET: name, config)"
+      }
+    ]
+  },
+  {
+    "id": "endpoint-toggles",
+    "icon": "toggle_on",
+    "tag": "API Governance",
+    "title": "Default REST Endpoint Permissions & Toggles",
+    "description": "Kamu dapat menonaktifkan endpoint CRUD bawaan (misal: mematikan 'GET List' /api/v1/{table}) agar data hanya dapat diakses melalui Custom Services yang aman.",
+    "items": [
+      {
+        "title": "Menonaktifkan GET List (/api/v1/{table})",
+        "description": "Mencegah klien atau publik mengambil seluruh isi tabel sekaligus. Siapa pun yang memanggil endpoint ini akan ditolak (403 Forbidden)."
+      },
+      {
+        "title": "Selective Method Toggles",
+        "description": "Atur izin untuk GET Single, POST Create, PUT Update, atau DELETE secara terpisah di menu 'Access Settings' pada Data Browser setiap tabel."
+      }
+    ]
+  },
+  {
     "id": "database-storage",
     "icon": "storage",
     "tag": "Database",

@@ -20,11 +20,13 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
+import { TableAuthConfig } from '@/components/TableAuthConfig';
 
 interface ColumnInput {
   name: string;
   type: string;
   nullable: boolean;
+  isUnique?: boolean;
   referencesTable?: string;
 }
 
@@ -44,6 +46,8 @@ const NewTablePage = () => {
   const [idType, setIdType] = useState<'serial' | 'uuid'>('serial');
   const [enablePagination, setEnablePagination] = useState(false);
   const [pageSize, setPageSize] = useState(10);
+  const [enableAuth, setEnableAuth] = useState(false);
+  const [userIdColumn, setUserIdColumn] = useState('user_id');
 
   useEffect(() => {
     fetch('/api/admin/tables?simple=true')
@@ -80,6 +84,15 @@ const NewTablePage = () => {
       return;
     }
 
+    const reservedName = columns.find(c => {
+      const lower = c.name.trim().toLowerCase();
+      return lower === 'id' || lower === 'created_at';
+    });
+    if (reservedName) {
+      setError(`Column '${reservedName.name}' is a reserved system primary/timestamp column.`);
+      return;
+    }
+
     setIsDeploying(true);
     setError(null);
 
@@ -92,10 +105,13 @@ const NewTablePage = () => {
           idType,
           enablePagination,
           pageSize,
+          enableAuth,
+          userIdColumn: enableAuth ? userIdColumn : null,
           columns: columns.map(c => ({
             name: c.name.trim(),
             type: c.type,
             nullable: c.nullable,
+            isUnique: !!c.isUnique,
             referencesTable: c.type === 'relation' ? c.referencesTable : undefined,
           })),
         }),
@@ -226,6 +242,14 @@ const NewTablePage = () => {
             </Box>
           </Paper>
 
+          <TableAuthConfig
+            enableAuth={enableAuth}
+            onEnableAuthChange={setEnableAuth}
+            userIdColumn={userIdColumn}
+            onUserIdColumnChange={setUserIdColumn}
+            availableColumns={columns.map(c => c.name).filter(Boolean)}
+          />
+
           <Paper variant="outlined" sx={{ p: { xs: 2.5, sm: 3 }, borderRadius: 2 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2.5, flexWrap: 'wrap', gap: 1 }}>
               <Typography variant="subtitle2" sx={{ fontWeight: 600, color: 'text.primary' }}>
@@ -303,18 +327,37 @@ const NewTablePage = () => {
                     )}
 
                     <Grid size={{ xs: 12, sm: 'grow' }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                        <FormControlLabel
-                          control={
-                            <Checkbox
-                              checked={col.nullable}
-                              onChange={e => updateColumn(idx, 'nullable', e.target.checked)}
-                              size="small"
-                            />
-                          }
-                          label={<Typography variant="body2">Nullable</Typography>}
-                          sx={{ m: 0 }}
-                        />
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'wrap', gap: 1 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                          <FormControlLabel
+                            control={
+                              <Checkbox
+                                checked={col.nullable}
+                                onChange={e => updateColumn(idx, 'nullable', e.target.checked)}
+                                size="small"
+                              />
+                            }
+                            label={<Typography variant="body2">Nullable</Typography>}
+                            sx={{ m: 0 }}
+                          />
+
+                          <FormControlLabel
+                            control={
+                              <Checkbox
+                                checked={!!col.isUnique}
+                                onChange={e => updateColumn(idx, 'isUnique', e.target.checked)}
+                                size="small"
+                                color="warning"
+                              />
+                            }
+                            label={
+                              <Typography variant="body2" sx={{ fontWeight: col.isUnique ? 600 : 400 }}>
+                                Unique Key (No Duplicate)
+                              </Typography>
+                            }
+                            sx={{ m: 0 }}
+                          />
+                        </Box>
 
                         <IconButton
                           color="error"

@@ -12,10 +12,12 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
 import SaveIcon from '@mui/icons-material/Save';
 import SecurityIcon from '@mui/icons-material/Security';
+import { AuthKeyCard } from '@/components/AuthKeyCard';
 
 const SettingsPage = () => {
   const [corsAllowAll, setCorsAllowAll] = useState(true);
   const [corsWhitelist, setCorsWhitelist] = useState('');
+  const [authSecretKey, setAuthSecretKey] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -29,6 +31,7 @@ const SettingsPage = () => {
       .then((data) => {
         setCorsAllowAll(data.cors_allow_all !== false);
         setCorsWhitelist(data.cors_whitelist || '');
+        setAuthSecretKey(data.auth_secret_key || '');
       })
       .catch((err) => {
         setMessage({ type: 'error', text: err.message });
@@ -48,6 +51,7 @@ const SettingsPage = () => {
         body: JSON.stringify({
           cors_allow_all: corsAllowAll,
           cors_whitelist: corsWhitelist,
+          auth_secret_key: authSecretKey,
         }),
       });
 
@@ -152,6 +156,11 @@ const SettingsPage = () => {
           </Button>
         </Box>
       </Paper>
+
+      <AuthKeyCard
+        authSecretKey={authSecretKey}
+        onKeyChange={(newKey) => setAuthSecretKey(newKey)}
+      />
     </Box>
   );
 };
